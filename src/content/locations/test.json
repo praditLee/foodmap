@@ -1,0 +1,21 @@
+{
+  "name": "ทดสอบ",
+  "coordinates": {
+    "lat": 1.25,
+    "lng": 6
+  },
+  "province": "chainat",
+  "district": "เมือง",
+  "category": "school",
+  "supplyChain": {
+    "production": [
+      "ผักอินทรีย์"
+    ],
+    "processing": [
+      "เงาะกระป๋อง"
+    ],
+    "distribution": [
+      "หน่อไม้แปรรูปขายส่ง"
+    ]
+  }
+}

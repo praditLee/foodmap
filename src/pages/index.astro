@@ -1,17 +1,34 @@
 ---
+import { getCollection } from "astro:content";
+import InteractiveMap from "../components/InteractiveMap";
+import "../styles/global.css";
 
+// 1. ดึงข้อมูลจริงจาก Keystatic
+const locations = await getCollection("locations");
+
+// 2. แปลงข้อมูลให้อยู่ในรูปแบบ Simple Object (เพื่อส่งให้ React)
+const mapData = locations.map((loc) => ({
+  slug: loc.slug,
+  ...loc.data, // กระจายข้อมูล fields ทั้งหมดออกมา
+}));
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <title>Food Map 4 จังหวัด</title>
+  </head>
+  <body class="bg-gray-50 font-sans">
+    <div class="container mx-auto px-4 py-10">
+      <h1 className="text-4xl font-bold text-center mb-2 text-gray-800">
+        แผนที่เครือข่ายอาหารปลอดภัย
+      </h1>
+      <p className="text-center text-gray-500 mb-10">
+        คลิกที่จังหวัดเพื่อดูรายชื่อสถานที่
+      </p>
+
+      {/* เรียกใช้ Component แผนที่ SVG */}
+      <InteractiveMap client:load allLocations={mapData} />
+    </div>
+  </body>
 </html>

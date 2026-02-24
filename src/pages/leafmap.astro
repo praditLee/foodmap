@@ -1,0 +1,47 @@
+---
+// src/pages/index.astro
+import Map from "../components/Map.jsx";
+import "../styles/global.css";
+
+// ข้อมูลจำลอง (เดี๋ยวเราค่อยเปลี่ยนไปดึงจาก Keystatic ทีหลัง)
+const mockLocations = [
+  {
+    slug: "chainat-bird-park",
+    title: "สวนนกชัยนาท",
+    province: "ชัยนาท",
+    coordinates: { lat: 15.185, lng: 100.125 }, // พิกัดจริง
+  },
+  {
+    slug: "suphan-tower",
+    title: "หอคอยบรรหาร-แจ่มใส",
+    province: "สุพรรณบุรี",
+    coordinates: { lat: 14.47, lng: 100.117 },
+  },
+  {
+    slug: "phra-pathom-chedi",
+    title: "องค์พระปฐมเจดีย์",
+    province: "นครปฐม",
+    coordinates: { lat: 13.819, lng: 100.06 },
+  },
+  {
+    slug: "nonthaburi-pier",
+    title: "ท่าน้ำนนท์",
+    province: "นนทบุรี",
+    coordinates: { lat: 13.843, lng: 100.493 },
+  },
+];
+---
+
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <title>แผนที่ 4 จังหวัด</title>
+  </head>
+  <body class="bg-gray-100 p-10">
+    <h1 class="text-3xl font-bold mb-5 text-center">
+      แผนที่เครือข่ายอาหารปลอดภัย
+    </h1>
+
+    <Map client:only="react" locations={mockLocations} />
+  </body>
+</html>
