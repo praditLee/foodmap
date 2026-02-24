@@ -2,9 +2,12 @@
 import { config, fields, collection } from '@keystatic/core';
 
 export default config({
-  storage: {
-    kind: 'local',
-  },
+  storage: isLocal 
+    ? { kind: 'local' } 
+    : { 
+        kind: 'github', 
+        repo: 'pradit.lee/foodmap' // ⚠️ แก้ตรงนี้เป็นชื่อ GitHub ของคุณ เช่น 'my-name/foodmap'
+      },
   collections: {
     locations: collection({
       label: 'สถานที่ (Locations)',
