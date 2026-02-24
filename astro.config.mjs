@@ -1,16 +1,21 @@
-// @ts-check
 import { defineConfig } from 'astro/config';
-import tailwindcss from '@tailwindcss/vite';
-import react from '@astrojs/react';
-import keystatic from '@keystatic/astro';
 import cloudflare from '@astrojs/cloudflare';
+import keystatic from '@keystatic/astro';
+import react from '@astrojs/react';
+import tailwindcss from '@tailwindcss/vite';
 
-// https://astro.build/config
 export default defineConfig({
+  output: 'hybrid',
+  adapter: cloudflare(),
+  
+  // Keystatic และ React อยู่ในหมวด integrations
+  integrations: [
+    keystatic(), 
+    react()
+  ],
+
+  // Tailwind v4 ต้องย้ายมาอยู่ในหมวด vite plugins
   vite: {
-    plugins: [tailwindcss()]
+    plugins: [tailwindcss()],
   },
-  output: 'hybrid', 
-  integrations: [react(), tailwind(), keystatic()],
-  adapter: cloudflare()
 });
