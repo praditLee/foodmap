@@ -5,7 +5,7 @@ import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
-  output: 'hybrid',
+  output: 'static',
   adapter: cloudflare(),
   
   // Keystatic และ React อยู่ในหมวด integrations
