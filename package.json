@@ -11,6 +11,7 @@
   "dependencies": {
     "@astrojs/cloudflare": "^12.6.12",
     "@astrojs/react": "^4.4.2",
+    "@fontsource-variable/anuphan": "^5.2.8",
     "@keystatic/astro": "^5.0.6",
     "@keystatic/core": "^0.5.48",
     "@tailwindcss/vite": "^4.1.18",
@@ -18,7 +19,9 @@
     "@types/react-dom": "^19.2.3",
     "astro": "^5.17.1",
     "leaflet": "^1.9.4",
+    "lodash": "^4.17.23",
     "lucide-react": "^0.564.0",
+    "marked": "^17.0.4",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-leaflet": "^5.0.0",

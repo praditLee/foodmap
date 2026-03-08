@@ -17,5 +17,8 @@ export default defineConfig({
   // Tailwind v4 ต้องย้ายมาอยู่ในหมวด vite plugins
   vite: {
     plugins: [tailwindcss()],
+    optimizeDeps: {
+      include: ['@keystatic/core', 'lodash', 'lodash/debounce']
+    }
   },
 });

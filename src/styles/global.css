@@ -1,1 +1,30 @@
 @import "tailwindcss";
+/* 1. Import ฟอนต์ Anuphan (Variable) */
+@import "@fontsource-variable/anuphan/index.css";
+
+@theme {
+  /* 2. กำหนดค่าตัวแปรฟอนต์ */
+  --font-anuphan: "Anuphan Variable", sans-serif;
+  --font-sans: "Anuphan Variable", sans-serif;
+  --color-space: srgb;
+}
+
+@layer base {
+  /* 3. ใช้ Anuphan กับทั้ง Body */
+  body {
+    font-family: var(--font-anuphan);
+    @apply font-normal leading-relaxed text-gray-800;
+  }
+
+  /* 4. เทคนิคสร้างความต่าง (Hierarchy) ให้หัวข้อ */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-anuphan);
+    /* หัวข้อใช้ตัวหนา (700) และบีบระยะห่างตัวอักษรเล็กน้อยให้ดูเท่ */
+    @apply font-bold tracking-tight text-black;
+  }
+
+  /* บังคับให้ทุกอย่างใช้ Anuphan รวมถึงปุ่มและ Input ที่มักจะมีฟอนต์เริ่มต้นของตัวเอง */
+  *, *::before, *::after {
+    font-family: var(--font-anuphan), sans-serif;
+  }
+}

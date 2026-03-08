@@ -8,6 +8,22 @@ export default function InteractiveMap({ allLocations }) {
   // State 2: สถานที่ที่ถูกเลือก (เพื่อเปิด Modal)
   const [selectedLocation, setSelectedLocation] = useState(null);
 
+  // 1. เพิ่มพจนานุกรมแปลงชื่อจังหวัดตรงนี้ครับ 👇
+  const provinceNameThai = {
+    chainat: 'ชัยนาท',
+    suphanburi: 'สุพรรณบุรี',
+    nakhonpathom: 'นครปฐม',
+    nonthaburi: 'นนทบุรี'
+  };
+
+  const categoryNameThai = {
+    school: 'โรงเรียน',
+    hospital: 'โรงพยาบาล',
+    government: 'หน่วยงานราชการ',
+    private: 'เอกชน',
+    other: 'อื่นๆ'
+  };
+
   // กรองสถานที่ตามจังหวัดที่เลือก
   const filteredLocations = activeProvince 
     ? allLocations.filter(loc => loc.province === activeProvince)
@@ -17,7 +33,9 @@ export default function InteractiveMap({ allLocations }) {
   const getGoogleMapsLink = (lat, lng) => {
     return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
   };
-
+console.log("จังหวัดที่คลิกคือ:", activeProvince);
+console.log("ข้อมูลสถานที่ทั้งหมด:", allLocations);
+console.log("ข้อมูลที่กรองได้:", filteredLocations);
   return (
     <div className="flex flex-col lg:flex-row gap-8 min-h-[600px]">
       
@@ -109,59 +127,59 @@ export default function InteractiveMap({ allLocations }) {
     {/* ภาคส่วนที่ 2: 4 จังหวัดหลัก (Interactive)      */}
     {/* ========================================== */}
     {/* 1. ชัยนาท */}
-    <g onClick={() => setActiveProvince('ชัยนาท')} className="cursor-pointer group">
+    <g onClick={() => setActiveProvince('chainat')} className="cursor-pointer group">
       <path
         id="chainat"
         d="m 186.15844,355.80255 2.39,1 0.23,1.21 0.55,-0.29 1.33,1.07 2.15,0.67 2.45,2.84 1.69,2.46 0.47,2.75 0.92,1.19 0.97,3.46 3.31,2.43 -0.01,1.31 0.49,0.65 -0.72,0.56 0,0 -3.15,1.9 -0.16,1.19 -3.91,0.58 -0.3,0.41 0.08,1.87 0.92,0.18 0.71,1.07 0.81,-0.17 0.11,0.56 -0.67,0.8 1.19,1.92 -0.39,0.69 -0.83,0.53 -3.91,-0.66 0,0 -4.49,2.88 -1.53,-2.32 -4.87,-1.03 -0.27,0.58 0.64,1.05 -0.26,1.3 -5.24,1.07 -1.02,-0.57 -4.47,-0.13 -1.99,-1.89 -1.73,0.27 -2.29,-0.5 -1.93,-1.24 -2.9,-0.06 -0.41,-1.01 0,0 0.54,-0.24 0.37,-1.47 3.28,-1.65 0.39,-1.16 -0.75,-0.92 2.24,-2.69 -3.92,-4.84 0.79,-0.75 -2.46,-3.34 -0.07,-0.88 0.65,-0.68 -0.71,-0.86 -0.01,-1.39 4.5,-2.79 4.24,0.48 1.67,0.56 0.55,1.1 4.96,-1.24 0.52,0.41 2.68,-0.14 1.3,0.74 1.12,-0.35 0.91,0.54 0.17,0.9 1.43,-1.49 0.05,-1.57 1.42,-1.26 -0.15,-0.95 -1.56,-1.35 0.45,-0.7 1.62,0.36 -1.2,-1.92 0.17,-0.68 z"
         className={`transition-colors duration-300 stroke-white stroke-[0.5]
-          ${activeProvince === 'ชัยนาท' ? 'fill-orange-500' : 'fill-orange-200 hover:fill-orange-400'}
+          ${activeProvince === 'chainat' ? 'fill-orange-500' : 'fill-orange-200 hover:fill-orange-400'}
         `}
 
       />
       {/* Label ชัยนาท (ขยับตำแหน่งให้ตรง) */}
-      <text x="180" y="375" fontSize="4" textAnchor="middle" className="pointer-events-none fill-white font-bold drop-shadow-md">ชัยนาท</text>
+      <text x="180" y="375" fontSize="4" textAnchor="middle" className="pointer-events-none font-bold drop-shadow-md">ชัยนาท</text>
     </g>
 
 
     {/* 2. สุพรรณบุรี */}
-    <g onClick={() => setActiveProvince('สุพรรณบุรี')} className="cursor-pointer group">
+    <g onClick={() => setActiveProvince('suphanburi')} className="cursor-pointer group">
       <path
         id="suphanburi"
         d="m 131.02844,385.18255 0.01,-0.85 1.13,-0.53 0.39,-0.75 -0.76,-0.96 0.39,-1.14 1.27,-1.09 -0.06,-0.67 0.99,-0.08 2.08,2.3 3.62,-0.01 -0.15,0.81 0.76,2.36 1.1,1.35 0.44,-0.52 3.75,0.4 5.29,2.66 3.1,0.54 0.15,-2.13 -0.41,-0.58 0.49,-0.79 1.73,0.09 2.02,0.94 1.5,-0.45 0.26,0.3 0,0 0.41,1.01 2.9,0.06 1.93,1.24 2.29,0.5 1.73,-0.27 1.99,1.89 4.47,0.13 1.02,0.57 5.24,-1.07 0.26,-1.3 -0.64,-1.05 0.27,-0.58 4.87,1.03 1.53,2.32 4.49,-2.88 0,0 -0.38,1.05 -0.98,0.32 0.01,0.66 0.54,1.34 2.15,-0.08 -0.43,0.58 -0.58,-0.05 0.21,1 0.98,0.11 -0.52,0.66 0.08,2.12 -0.93,2.27 1.57,1.34 0,0 -0.33,0.71 -0.94,0.38 -0.19,2.35 0.69,1.76 -0.49,2.39 1.47,2.06 -2.4,2.97 1.02,2.05 -0.98,1.3 0.85,1.44 -0.11,1.13 1.28,1.07 0.83,1.64 1.01,0.12 0,0 -0.59,1.49 0.29,1.66 1.65,0.51 0.56,1.81 -0.95,1.39 0.02,3.97 -1.66,2.82 -0.04,5.18 0,0 -1.86,1.85 -4,1.09 -1.61,1.44 -12.82,0.75 -0.89,1.09 -1.54,0.34 -2.43,2.93 -1.74,0.89 0,0 -2.18,-0.43 -0.08,-1.02 -0.89,-0.4 -0.39,-0.94 -2.49,0.59 -1.41,-0.44 -0.27,-0.64 0.1,-2.56 1.05,-2.89 0.79,0.23 0.65,-1.19 1.14,0.59 1.38,-1.09 0.43,-1.47 0.63,0.17 0.19,-5.84 -0.63,-1.85 0.46,-0.82 -0.26,-3.17 0.46,-1.18 -0.56,-1.91 0.34,-4.4 -0.6,-2.9 0.66,-1.99 -1.61,-1.07 0.62,-1.61 1.73,-0.42 -0.71,-0.99 -0.26,-1.6 -1.48,-1.92 -0.06,-0.88 -1.35,-0.73 1.37,-1.33 0.04,-0.88 -0.94,-0.58 -1.75,0.3 -1.87,-0.47 -0.82,-1 -1.78,-0.67 -2.73,-2.1 -2.29,1.54 -2.39,-0.57 -0.75,0.44 -1.45,-1.24 -0.27,0.59 0.39,1.78 -0.62,1.45 0.82,1.13 -0.19,0.56 -2.39,1.38 -3.35,0.39 -0.22,-1.7 -1.64,-3.77 -1.18,-0.34 -2.08,1.03 -2.01,-0.43 -1.49,-1.41 -0.34,-0.96 -1.45,-0.47 -1.07,-1.43 -0.76,-1.88 2.31,-2.09 0.35,-2.18 -0.71,-0.96 0.65,-0.86 -1.16,-2.27 z"
         className={`transition-colors duration-300 stroke-white stroke-[0.5]
-          ${activeProvince === 'สุพรรณบุรี' ? 'fill-green-500' : 'fill-green-200 hover:fill-green-400'}
+          ${activeProvince === 'suphanburi' ? 'fill-green-500' : 'fill-green-200 hover:fill-green-400'}
         `}
 
       />
-      <text x="180" y="415" fontSize="4" textAnchor="middle" className="pointer-events-none fill-white font-bold drop-shadow-md">สุพรรณบุรี</text>
+      <text x="180" y="415" fontSize="4" textAnchor="middle" className="pointer-events-none font-bold drop-shadow-md">สุพรรณบุรี</text>
     </g>
 
 
     {/* 3. นครปฐม */}
-    <g onClick={() => setActiveProvince('นครปฐม')} className="cursor-pointer group">
+    <g onClick={() => setActiveProvince('nakhonpathom')} className="cursor-pointer group">
       <path
         id="nakhonpathom"
         d="m 195.58844,439.50255 0.29,2.46 2.52,0.29 -0.28,3.08 0,0 -0.97,8.03 0.69,0.52 -0.37,0.96 1.87,1.69 -2.27,2.89 0.88,0.73 2.82,6.08 0,0 0.67,1.54 0.14,4.58 0,0 -0.72,0.87 -2.31,0.7 -0.21,1.21 -1.19,0.81 -0.39,-0.22 -2.28,1.04 -0.71,-1.22 -2,0.49 -0.35,-0.62 -0.39,0.53 -0.63,-0.47 -2.13,0.46 -2.02,2.23 -2.52,-0.09 0,0 -0.49,-0.12 0.51,-2.99 -2.16,0.28 -0.61,-0.73 0.11,-3.53 -1.84,1.16 -3.17,0.32 -0.68,-0.81 -0.19,-1.13 0.74,-0.79 0.39,-1.68 0.9,-0.32 -0.03,-0.64 -0.48,-0.21 -0.36,-1.58 -1.04,0.38 -0.55,-0.9 -1.55,-0.27 -0.62,0.42 0.73,-2.15 -1.03,-2.1 1.22,-0.23 0.75,-2.13 -3.31,-0.84 0,0 -0.52,-0.97 -1.08,-0.52 -0.57,-1.89 -1.02,-0.09 1.6,-2.95 -0.68,-1.18 0,0 1.74,-0.89 2.43,-2.93 1.54,-0.34 0.89,-1.09 12.82,-0.75 1.61,-1.44 4,-1.09 z"
         className={`transition-colors duration-300 stroke-white stroke-[0.5]
-          ${activeProvince === 'นครปฐม' ? 'fill-yellow-500' : 'fill-yellow-200 hover:fill-yellow-400'}
+          ${activeProvince === 'nakhonpathom' ? 'fill-yellow-500' : 'fill-yellow-200 hover:fill-yellow-400'}
         `}
         
       />
-      <text x="185" y="460" fontSize="4" textAnchor="middle" className="pointer-events-none fill-white font-bold drop-shadow-md">นครปฐม</text>
+      <text x="185" y="460" fontSize="4" textAnchor="middle" className="pointer-events-none font-bold drop-shadow-md">นครปฐม</text>
     </g>
 
 
     {/* 4. นนทบุรี */}
-    <g onClick={() => setActiveProvince('นนทบุรี')} className="cursor-pointer group">
+    <g onClick={() => setActiveProvince('nonthaburi')} className="cursor-pointer group">
       <path
         id="nonthaburi"
-        d="m 202.47844,446.04255 -0.84,4.15 2.08,4.32 4.53,0.73 1.64,1.02 0.6,-0.32 2.51,2.39 2.11,-0.56 0.59,-0.75 1.59,0.44 0,0 -1.35,6.88 -2.35,1.71 -0.13,0.52 0.58,0.31 -1.01,0.87 -2.05,0.77 -0.75,-0.59 -8.74,-0.44 -0.72,-1.26 0,0 -2.82,-6.08 -0.88,-0.73 2.27,-2.89 -1.87,-1.69 0.37,-0.96 -0.69,-0.52 0.97,-8.03 0,0 1.44,-1.01 2.31,0 .87 z"
+        d="m 202.47844,446.04255 -0.84,4.15 2.08,4.32 4.53,0.73 1.64,1.02 0.6,-0.32 2.51,2.39 2.11,-0.56 0.59,-0.75 1.59,0.44 0,0 -1.35,6.88 -2.35,1.71 -0.13,0.52 0.58,0.31 -1.01,0.87 -2.05,0.77 -0.75,-0.59 -8.74,-0.44 -0.72,-1.26 0,0 -2.82,-6.08 -0.88,-0.73 2.27,-2.89 -1.87,-1.69 0.37,-0.96 -0.69,-0.52 0.97,-8.03 0,0 1.44,-1.01 2.31,0 z"
         className={`transition-colors duration-300 stroke-white stroke-[0.5]
-          ${activeProvince === 'นนทบุรี' ? 'fill-purple-500' : 'fill-purple-300 hover:fill-purple-500'}
+          ${activeProvince === 'nonthaburi' ? 'fill-purple-500' : 'fill-purple-300 hover:fill-purple-500'}
         `}
 
       />
-      <text x="208" y="463" fontSize="4" textAnchor="middle" className="pointer-events-none fill-white font-bold drop-shadow-md">นนทบุรี</text>
+      <text x="208" y="463" fontSize="4" textAnchor="middle" className="pointer-events-none font-bold drop-shadow-md">นนทบุรี</text>
     </g>
 
 </svg>
@@ -180,7 +198,7 @@ export default function InteractiveMap({ allLocations }) {
       {/* --- ส่วนที่ 2: รายชื่อสถานที่ (List Sidebar) --- */}
       <div className="w-full lg:w-1/3 bg-white p-6 rounded-xl shadow-sm border border-gray-100 overflow-y-auto max-h-[600px]">
         <h2 className="text-2xl font-bold mb-4 border-b pb-2">
-          {activeProvince ? `สถานที่ใน ${activeProvince}` : 'กรุณาเลือกจังหวัด'}
+          {activeProvince ? `สถานที่ในจังหวัด${provinceNameThai[activeProvince]}` : 'กรุณาเลือกจังหวัด'}
         </h2>
         
         {filteredLocations.length > 0 ? (
@@ -196,7 +214,7 @@ export default function InteractiveMap({ allLocations }) {
                     <h3 className="font-bold text-gray-800 group-hover:text-blue-600">{loc.name}</h3>
                     <p className="text-sm text-gray-500">{loc.district}</p>
                     <span className="inline-block mt-2 text-xs bg-gray-200 px-2 py-1 rounded text-gray-600">
-                      {loc.category}
+                      {categoryNameThai[loc.category] || loc.category}
                     </span>
                   </div>
                   <MapPin className="w-5 h-5 text-gray-400 group-hover:text-blue-500" />
@@ -238,8 +256,9 @@ export default function InteractiveMap({ allLocations }) {
                 <div>
                    <h4 className="font-bold text-gray-700 mb-2">ข้อมูลทั่วไป</h4>
                    <p className="text-gray-600 mb-2"><strong>อำเภอ:</strong> {selectedLocation.district}</p>
-                   <p className="text-gray-600 mb-2"><strong>ประเภท:</strong> {selectedLocation.category}</p>
-                   
+                   <p className="text-gray-600 mb-2">
+                      <strong>ประเภท:</strong> {categoryNameThai[selectedLocation.category] || selectedLocation.category}
+                   </p>
                    {/* ปุ่ม Google Maps */}
                    <a 
                      href={getGoogleMapsLink(selectedLocation.coordinates.lat, selectedLocation.coordinates.lng)}
@@ -253,23 +272,77 @@ export default function InteractiveMap({ allLocations }) {
                 </div>
 
                 <div>
-                  <h4 className="font-bold text-gray-700 mb-2">บทบาท</h4>
-                  {/* ตัวอย่างการแสดง array */}
-                  <div className="flex flex-wrap gap-2">
-                     {/* ใช้ selectedLocation.roles.map(...) */}
-                     <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">ผู้ผลิต</span>
-                  </div>
-                </div>
+  <h4 className="font-bold text-gray-700 mb-3">ห่วงโซ่อุปทาน (Supply Chain)</h4>
+  
+  <div className="flex flex-col gap-3">
+    
+    {/* --- 1. ด้านการผลิต (Production) --- */}
+    {selectedLocation.supplyChain?.production?.length > 0 && (
+      <div>
+        <p className="text-sm font-semibold text-gray-600 mb-1">ด้านการผลิต:</p>
+        <div className="flex flex-wrap gap-2">
+          {selectedLocation.supplyChain.production.map((item, index) => (
+            <span key={`prod-${index}`} className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">
+              {item}
+            </span>
+          ))}
+        </div>
+      </div>
+    )}
+
+    {/* --- 2. ด้านการแปรรูป (Processing) --- */}
+    {selectedLocation.supplyChain?.processing?.length > 0 && (
+      <div>
+        <p className="text-sm font-semibold text-gray-600 mb-1">ด้านการแปรรูป:</p>
+        <div className="flex flex-wrap gap-2">
+          {selectedLocation.supplyChain.processing.map((item, index) => (
+            <span key={`proc-${index}`} className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-sm">
+              {item}
+            </span>
+          ))}
+        </div>
+      </div>
+    )}
+
+    {/* --- 3. ด้านการกระจาย (Distribution) --- */}
+    {selectedLocation.supplyChain?.distribution?.length > 0 && (
+      <div>
+        <p className="text-sm font-semibold text-gray-600 mb-1">ด้านการกระจายสินค้า:</p>
+        <div className="flex flex-wrap gap-2">
+          {selectedLocation.supplyChain.distribution.map((item, index) => (
+            <span key={`dist-${index}`} className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">
+              {item}
+            </span>
+          ))}
+        </div>
+      </div>
+    )}
+
+    {/* กรณีที่ไม่มีข้อมูลเลยทั้ง 3 หมวด */}
+    {(!selectedLocation.supplyChain || 
+      (selectedLocation.supplyChain.production?.length === 0 && 
+       selectedLocation.supplyChain.processing?.length === 0 && 
+       selectedLocation.supplyChain.distribution?.length === 0)) && (
+      <span className="text-gray-400 text-sm italic">ไม่มีข้อมูลห่วงโซ่อุปทาน</span>
+    )}
+
+  </div>
+</div>
               </div>
 
               <hr className="my-6" />
 
-              <div className="prose max-w-none">
-                 <h4 className="font-bold text-gray-700">รายละเอียดเพิ่มเติม</h4>
-                 {/* ตรงนี้เดี๋ยวเราเอา Content จาก Keystatic มาใส่ */}
-                 <p className="text-gray-600">
-                    เนื้อหาตัวอย่าง... (ตรงนี้คุณต้องส่ง HTML หรือ render content มาจาก Astro prop)
-                 </p>
+              <div className="prose max-w-none mt-4">
+                 <h4 className="font-bold text-gray-700 mb-2">รายละเอียดเพิ่มเติม</h4>
+                 
+                 <div className="text-gray-600">
+                    {selectedLocation.contentHTML ? (
+                      /* ให้ React อ่านและแสดงผลก้อน HTML โดยตรง */
+                      <div dangerouslySetInnerHTML={{ __html: selectedLocation.contentHTML }} />
+                    ) : (
+                      <p className="italic text-gray-400">ไม่มีข้อมูลรายละเอียด</p>
+                    )}
+                 </div>
               </div>
             </div>
           </div>

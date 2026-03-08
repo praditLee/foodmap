@@ -1,16 +1,67 @@
 ---
-import { getCollection } from "astro:content";
 import InteractiveMap from "../components/InteractiveMap";
 import "../styles/global.css";
 
-// 1. ดึงข้อมูลจริงจาก Keystatic
-const locations = await getCollection("locations");
+import { createReader } from "@keystatic/core/reader";
+import keystaticConfig from "../../keystatic.config";
 
-// 2. แปลงข้อมูลให้อยู่ในรูปแบบ Simple Object (เพื่อส่งให้ React)
-const mapData = locations.map((loc) => ({
-  slug: loc.slug,
-  ...loc.data, // กระจายข้อมูล fields ทั้งหมดออกมา
-}));
+const reader = createReader(process.cwd(), keystaticConfig);
+const rawLocations = await reader.collections.locations.all();
+
+// 🚨 นี่คือฟังก์ชันพระเอกของเรา: แปลง Array ของ Keystatic ให้เป็น HTML อัตโนมัติ
+function keystaticToHTML(nodes) {
+  if (!nodes || !Array.isArray(nodes)) return "";
+  return nodes
+    .map((node) => {
+      // 1. ถ้าก้อนนี้เป็น "ข้อความ"
+      if (node.text !== undefined) {
+        let text = node.text;
+        if (node.bold) text = `<strong>${text}</strong>`;
+        if (node.italic) text = `<em>${text}</em>`;
+        return text;
+      }
+
+      // 2. ถ้าก้อนนี้เป็น "โครงสร้าง" (ย่อหน้า, หัวข้อ, ลิสต์)
+      const childrenHTML = keystaticToHTML(node.children);
+      switch (node.type) {
+        case "paragraph":
+          return `<p class="mb-4">${childrenHTML}</p>`;
+        case "heading":
+          return `<h${node.level || 3} class="text-lg font-bold text-gray-800 mt-4 mb-2">${childrenHTML}</h${node.level || 3}>`;
+        case "list":
+          return node.ordered
+            ? `<ol class="list-decimal pl-5 mb-4">${childrenHTML}</ol>`
+            : `<ul class="list-disc pl-5 mb-4">${childrenHTML}</ul>`;
+        case "item":
+        case "list-item":
+          return `<li class="mb-1">${childrenHTML}</li>`;
+        case "link":
+          return `<a href="${node.href}" class="text-blue-600 underline" target="_blank">${childrenHTML}</a>`;
+        case "divider":
+          return `<hr class="my-4 border-gray-300" />`;
+        default:
+          return childrenHTML;
+      }
+    })
+    .join("");
+}
+
+// โหลดข้อมูลและแปลงเป็น HTML
+const mapData = await Promise.all(
+  rawLocations.map(async (loc) => {
+    // ดึงก้อนข้อมูล Array จาก Keystatic
+    const astArray = await loc.entry.content();
+
+    // โยนเข้าฟังก์ชันแปลงร่าง
+    const htmlContent = keystaticToHTML(astArray);
+
+    return {
+      slug: loc.slug,
+      ...loc.entry,
+      contentHTML: htmlContent, // ส่ง HTML ที่เสร็จแล้วไปให้ React
+    };
+  }),
+);
 ---
 
 <html lang="th">

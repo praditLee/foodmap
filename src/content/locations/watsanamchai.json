@@ -1,11 +1,11 @@
 {
-  "name": "ทดสอบ",
+  "name": "โรงเรียนวัดสนามชัย",
   "coordinates": {
-    "lat": 1.25,
-    "lng": 6
+    "lat": 14.957,
+    "lng": 100.257
   },
   "province": "chainat",
-  "district": "เมือง",
+  "district": "สรรคบุรี",
   "category": "school",
   "supplyChain": {
     "production": [

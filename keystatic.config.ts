@@ -2,7 +2,7 @@
 import { config, fields, collection } from '@keystatic/core';
 
 export default config({
-  storage: isLocal 
+  storage: process.env.NODE_ENV === 'development'
     ? { kind: 'local' } 
     : { 
         kind: 'github', 
@@ -24,8 +24,9 @@ export default config({
           label: 'จังหวัด',
           options: [
             { label: 'ขัยนาท', value: 'chainat' },
-            { label: 'เชียงราย', value: 'chiangrai' },
-            { label: 'แม่ฮ่องสอน', value: 'maehongson' },
+            { label: 'สุพรรณบุรี', value: 'suphanburi' },
+            { label: 'นครปฐม', value: 'nakhonpathom' },
+            { label: 'นนทบุรี', value: 'nonthaburi' },
           ],
           defaultValue: 'chainat',
         }),
