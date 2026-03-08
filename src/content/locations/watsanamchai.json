@@ -17,5 +17,13 @@
     "distribution": [
       "หน่อไม้แปรรูปขายส่ง"
     ]
-  }
+  },
+  "roles": [
+    "producer",
+    "distributor"
+  ],
+  "images": [
+    "/images/watsanamchai/images/0.jpg",
+    "/images/watsanamchai/images/1.jpg"
+  ]
 }

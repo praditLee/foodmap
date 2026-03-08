@@ -47,6 +47,27 @@ export default config({
           processing: fields.array(fields.text({ label: 'รายละเอียด' }), { label: 'ด้านการแปรรูป (Processing)', itemLabel: props => props.value }),
           distribution: fields.array(fields.text({ label: 'รายละเอียด' }), { label: 'ด้านการกระจาย (Distribution)', itemLabel: props => props.value }),
         }),
+        roles: fields.multiselect({
+          label: 'บทบาท',
+          options: [
+            { label: 'ผู้ผลิต', value: 'producer' },
+            { label: 'ผู้จำหน่าย', value: 'distributor' },
+            { label: 'ผู้บริโภค', value: 'consumer' },
+          ],
+          defaultValue: [],
+        }),
+        images: fields.array(
+          fields.image({
+            label: 'รูปภาพสถานที่',
+            // กำหนดให้เซฟรูปไปไว้ในโฟลเดอร์ public (Astro จะได้ดึงไปโชว์ได้ทันที)
+            directory: 'public/images/', 
+            publicPath: '/images/',
+          }),
+          {
+            label: 'แกลเลอรีรูปภาพ',
+            itemLabel: (props) => props.value ? 'รูปภาพที่อัปโหลดแล้ว 🖼️' : 'รอเพิ่มรูปภาพ...',
+          }
+        ),
         content: fields.document({
           label: 'รายละเอียดเนื้อหา',
           formatting: true,

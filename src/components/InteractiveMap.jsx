@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X, MapPin, Navigation } from 'lucide-react'; // ลง icons เพิ่มหน่อย: pnpm add lucide-react
+import ImageGallery from './ImageGallery';
 
 export default function InteractiveMap({ allLocations }) {
   // State 1: จังหวัดที่ถูกเลือก (เริ่มมายังไม่เลือกใคร = null)
@@ -7,6 +8,8 @@ export default function InteractiveMap({ allLocations }) {
   
   // State 2: สถานที่ที่ถูกเลือก (เพื่อเปิด Modal)
   const [selectedLocation, setSelectedLocation] = useState(null);
+  const [searchTerm, setSearchTerm] = useState(''); // เก็บคำค้นหา
+  const [filterRole, setFilterRole] = useState('all'); // เก็บค่าบทบาท ('all' คือดูทั้งหมด)
 
   // 1. เพิ่มพจนานุกรมแปลงชื่อจังหวัดตรงนี้ครับ 👇
   const provinceNameThai = {
@@ -24,10 +27,22 @@ export default function InteractiveMap({ allLocations }) {
     other: 'อื่นๆ'
   };
 
-  // กรองสถานที่ตามจังหวัดที่เลือก
-  const filteredLocations = activeProvince 
-    ? allLocations.filter(loc => loc.province === activeProvince)
-    : [];
+  // 👇 2. อัปเกรดระบบ Filter ให้เช็ค 3 เด้ง
+  const filteredLocations = allLocations.filter(loc => {
+    // กรองที่ 1: เช็คจังหวัด (ถ้าไม่ได้คลิกจังหวัดบนแผนที่ จะให้ผ่านไปดึงข้อมูลทั้งหมดมาโชว์)
+    const matchProvince = activeProvince ? loc.province === activeProvince : true;
+
+    // กรองที่ 2: เช็คคำค้นหา (แปลงเป็นพิมพ์เล็กทั้งคู่ก่อนเทียบ เพื่อให้หาเจอชัวร์ๆ)
+    const matchSearch = loc.name.toLowerCase().includes(searchTerm.toLowerCase());
+
+    // กรองที่ 3: เช็คบทบาท (ถ้าเลือก 'all' ก็ปล่อยผ่าน / ถ้าเลือกอย่างอื่น ต้องไปหาใน Array roles)
+    const matchRole = filterRole === 'all' 
+      ? true 
+      : (loc.roles && loc.roles.includes(filterRole));
+
+    // ต้องตรงเงื่อนไขทั้ง 3 ข้อถึงจะแสดงผล
+    return matchProvince && matchSearch && matchRole;
+  });
 
   // ฟังก์ชันสร้าง Google Maps Link
   const getGoogleMapsLink = (lat, lng) => {
@@ -196,10 +211,46 @@ console.log("ข้อมูลที่กรองได้:", filteredLocatio
       </div>
 
       {/* --- ส่วนที่ 2: รายชื่อสถานที่ (List Sidebar) --- */}
-      <div className="w-full lg:w-1/3 bg-white p-6 rounded-xl shadow-sm border border-gray-100 overflow-y-auto max-h-[600px]">
-        <h2 className="text-2xl font-bold mb-4 border-b pb-2">
-          {activeProvince ? `สถานที่ในจังหวัด${provinceNameThai[activeProvince]}` : 'กรุณาเลือกจังหวัด'}
-        </h2>
+      <div className="w-full lg:w-1/2 bg-white p-6 rounded-xl shadow-sm border border-gray-100 overflow-y-auto max-h-[600px]">
+        <div className="mb-4 border-b pb-4">
+  <div className="flex justify-between items-center mb-4">
+    <h2 className="text-xl font-bold text-gray-800">
+      {activeProvince ? `📍 ${provinceNameThai[activeProvince]}` : '🌐 ทุกจังหวัด'}
+    </h2>
+    
+    {/* ปุ่มเคลียร์จังหวัด (ถ้ามี activeProvince ค่อยโชว์) */}
+    {activeProvince && (
+      <button 
+        onClick={() => setActiveProvince(null)}
+        className="text-sm text-red-500 hover:text-red-700 underline"
+      >
+        ล้างการเลือกจังหวัด
+      </button>
+    )}
+  </div>
+
+  {/* 👇 กล่องค้นหา และ ตัวเลือกบทบาท */}
+  <div className="flex flex-col sm:flex-row gap-2">
+    <input
+      type="text"
+      placeholder="🔍 พิมพ์ชื่อสถานที่..."
+      className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+      value={searchTerm}
+      onChange={(e) => setSearchTerm(e.target.value)}
+    />
+    
+    <select
+      className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+      value={filterRole}
+      onChange={(e) => setFilterRole(e.target.value)}
+    >
+      <option value="all">บทบาททั้งหมด</option>
+      <option value="producer">ผู้ผลิต</option>
+      <option value="distributor">ผู้จำหน่าย</option>
+      <option value="consumer">ผู้บริโภค</option>
+    </select>
+  </div>
+</div>
         
         {filteredLocations.length > 0 ? (
           <ul className="space-y-3">
@@ -216,6 +267,9 @@ console.log("ข้อมูลที่กรองได้:", filteredLocatio
                     <span className="inline-block mt-2 text-xs bg-gray-200 px-2 py-1 rounded text-gray-600">
                       {categoryNameThai[loc.category] || loc.category}
                     </span>
+
+                    
+
                   </div>
                   <MapPin className="w-5 h-5 text-gray-400 group-hover:text-blue-500" />
                 </div>
@@ -246,11 +300,8 @@ console.log("ข้อมูลที่กรองได้:", filteredLocatio
 
             {/* Modal Body */}
             <div className="p-6">
-              {/* รูปภาพ (ถ้ามี) */}
-               <div className="bg-gray-200 h-48 rounded-lg mb-6 flex items-center justify-center text-gray-500">
-                  {/* ใส่ <img src={...} /> ตรงนี้ */}
-                  [พื้นที่แสดงรูปภาพ]
-               </div>
+              <ImageGallery images={selectedLocation.images} />
+               
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -259,6 +310,34 @@ console.log("ข้อมูลที่กรองได้:", filteredLocatio
                    <p className="text-gray-600 mb-2">
                       <strong>ประเภท:</strong> {categoryNameThai[selectedLocation.category] || selectedLocation.category}
                    </p>
+                   <div>
+  <h4 className="font-bold text-gray-700 mb-2">บทบาท</h4>
+  
+  <div className="flex flex-wrap gap-2">
+    {/* เช็คว่ามีข้อมูล roles ไหม และต้องมีมากกว่า 0 */}
+    {selectedLocation.roles && selectedLocation.roles.length > 0 ? (
+      selectedLocation.roles.map((role, index) => {
+        // สร้างพจนานุกรมแปลภาษาแบบง่ายๆ ในตัว
+        const roleNameThai = {
+          producer: 'ผู้ผลิต',
+          distributor: 'ผู้จำหน่าย',
+          consumer: 'ผู้บริโภค'
+        }[role] || role;
+
+        return (
+          <span 
+            key={`role-${index}`} 
+            className="bg-purple-100 text-purple-800 border border-purple-200 px-2 py-1 rounded text-sm"
+          >
+            {roleNameThai}
+          </span>
+        );
+      })
+    ) : (
+      <span className="text-gray-400 text-sm italic">ไม่มีข้อมูลบทบาท</span>
+    )}
+  </div>
+</div>
                    {/* ปุ่ม Google Maps */}
                    <a 
                      href={getGoogleMapsLink(selectedLocation.coordinates.lat, selectedLocation.coordinates.lng)}
