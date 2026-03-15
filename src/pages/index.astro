@@ -69,15 +69,16 @@ const mapData = await Promise.all(
     <meta charset="utf-8" />
     <title>Food Map 4 จังหวัด</title>
   </head>
-  <body class="bg-gray-50 font-sans">
-    <div class="container mx-auto px-4 py-10">
-      <h1 className="text-4xl font-bold text-center mb-2 text-gray-800">
-        แผนที่เครือข่ายอาหารปลอดภัย
-      </h1>
-      <p className="text-center text-gray-500 mb-10">
-        คลิกที่จังหวัดเพื่อดูรายชื่อสถานที่
-      </p>
-
+  <body>
+    <div class="mx-auto py-10 max-w-7xl">
+      <div class="px-4">
+        <h1 className="text-4xl font-bold text-center mb-2 text-gray-800">
+          แผนที่เครือข่ายอาหารปลอดภัย
+        </h1>
+        <p className="text-center text-gray-500 mb-10">
+          คลิกที่จังหวัดเพื่อดูรายชื่อสถานที่
+        </p>
+      </div>
       {/* เรียกใช้ Component แผนที่ SVG */}
       <InteractiveMap client:load allLocations={mapData} />
     </div>
