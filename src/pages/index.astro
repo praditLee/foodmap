@@ -1,12 +1,12 @@
 ---
 import InteractiveMap from "../components/InteractiveMap";
 import "../styles/global.css";
-
 import { createReader } from "@keystatic/core/reader";
 import keystaticConfig from "../../keystatic.config";
 
 const reader = createReader(process.cwd(), keystaticConfig);
 const rawLocations = await reader.collections.locations.all();
+const rawNetworks = await reader.collections.networks.all();
 
 // 🚨 นี่คือฟังก์ชันพระเอกของเรา: แปลง Array ของ Keystatic ให้เป็น HTML อัตโนมัติ
 function keystaticToHTML(nodes) {
@@ -62,6 +62,18 @@ const mapData = await Promise.all(
     };
   }),
 );
+
+// 👇 แปลงข้อมูล Networks (เพื่อเอา HTML content)
+const networkData = await Promise.all(
+  rawNetworks.map(async (net) => {
+    const astArray = await net.entry.content();
+    return {
+      slug: net.slug,
+      ...net.entry,
+      contentHTML: keystaticToHTML(astArray),
+    };
+  }),
+);
 ---
 
 <html lang="th">
@@ -80,7 +92,11 @@ const mapData = await Promise.all(
         </p>
       </div>
       {/* เรียกใช้ Component แผนที่ SVG */}
-      <InteractiveMap client:load allLocations={mapData} />
+      <InteractiveMap
+        client:load
+        allLocations={mapData}
+        allNetworks={networkData}
+      />
     </div>
   </body>
 </html>

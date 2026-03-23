@@ -6,4 +6,8 @@ const locations = defineCollection({
   loader: glob({ pattern: "**/*.json", base: "./src/content/locations" }),
 });
 
-export const collections = { locations };
+const networks = defineCollection({
+  loader: glob({ pattern: "**/*.json", base: "./src/content/networks" }),
+});
+
+export const collections = { locations, networks };

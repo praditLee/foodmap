@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { X, MapPin, Navigation } from 'lucide-react'; // ลง icons เพิ่มหน่อย: pnpm add lucide-react
 import ImageGallery from './ImageGallery';
 
-export default function InteractiveMap({ allLocations }) {
+export default function InteractiveMap({ allLocations, allNetworks }) {
   // State 1: จังหวัดที่ถูกเลือก (เริ่มมายังไม่เลือกใคร = null)
   const [activeProvince, setActiveProvince] = useState(null);
   
@@ -48,6 +48,11 @@ export default function InteractiveMap({ allLocations }) {
   const getGoogleMapsLink = (lat, lng) => {
     return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
   };
+
+  // ดึงเครือข่ายของจังหวัดที่กำลังคลิกดู
+  const activeProvinceNetworks = allNetworks?.filter(
+    (net) => net.province === activeProvince
+  );
 // console.log("จังหวัดที่คลิกคือ:", activeProvince);
 // console.log("ข้อมูลสถานที่ทั้งหมด:", allLocations);
 // console.log("ข้อมูลที่กรองได้:", filteredLocations);
@@ -228,6 +233,27 @@ export default function InteractiveMap({ allLocations }) {
           </button>
         )}
       </div>
+
+      {/* 👇 ส่วนที่เพิ่มใหม่: แสดงข้อมูลเครือข่ายเมื่อคลิกจังหวัด */}
+        {activeProvince && activeProvinceNetworks?.length > 0 && (
+          <div className="mb-6">
+            {activeProvinceNetworks.map((net) => (
+              <div key={net.slug} className="p-4 bg-blue-50 border border-blue-100 rounded-lg mb-4">
+                <h3 className="text-xl font-bold text-blue-800 mb-2">{net.name}</h3>
+                {net.description && <p className="text-gray-700 text-sm mb-3">{net.description}</p>}
+                
+                {/* ถ้าอยากให้แสดงรายละเอียดเต็มๆ ด้วยก็ใส่ contentHTML เข้าไป */}
+                {net.contentHTML && (
+                  <div 
+                    className="text-sm text-gray-600 prose prose-sm max-w-none" 
+                    dangerouslySetInnerHTML={{ __html: net.contentHTML }} 
+                  />
+                )}
+              </div>
+            ))}
+            <h4 className="font-bold text-gray-800 mb-3 border-b pb-2">สถานที่ในเครือข่าย</h4>
+          </div>
+        )}
 
       {/* 👇 กล่องค้นหา และ ตัวเลือกบทบาท */}
       <div className="flex flex-col sm:flex-row gap-2">
