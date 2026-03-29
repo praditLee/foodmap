@@ -90,8 +90,64 @@ const networkData = await Promise.all(
     <meta charset="utf-8" />
     <title>Food Map 4 จังหวัด</title>
   </head>
-  <body>
-    <div class="mx-auto py-10 max-w-7xl">
+  <body class="bg-gray-100 min-h-screen flex flex-col">
+    {/* ================= HEADER (เลียนแบบเว็บต้นฉบับ) ================= */}
+    <header
+      class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50"
+    >
+      <div
+        class="max-w-7xl mx-auto px-4 flex flex-col lg:flex-row justify-between items-center py-3 gap-4"
+      >
+        <a
+          href="https://landactionthai.org"
+          class="flex items-center gap-3 hover:opacity-80 transition"
+          title="กลับสู่หน้าหลักมูลนิธิชีวิตไท"
+        >
+          <img
+            src="https://landactionthai.org/templates/yootheme/cache/Screenshot_2563-01-06_at_192605-a2150f35.png"
+            alt="Local Act Logo"
+            class="h-20 object-contain"
+            onError={(e) => (e.target.style.display = "none")}
+          />
+        </a>
+
+        {/* เมนูนำทาง */}
+        <nav
+          class="flex flex-wrap justify-between gap-x-5 gap-y-2 text-[13px] font-bold text-gray-700"
+        >
+          <a
+            href="https://landactionthai.org"
+            class="hover:text-green-700 transition">หน้าหลัก</a
+          >
+          <a
+            href="https://landactionthai.org/about-us"
+            class="hover:text-green-700 transition">เกี่ยวกับเรา</a
+          >
+          <a
+            href="https://landactionthai.org/research"
+            class="hover:text-green-700 transition">วิจัย</a
+          >
+          <a href="#" class="hover:text-green-700 transition">นาเช่า</a>
+          <a href="#" class="hover:text-green-700 transition">สินค้า</a>
+          <a href="#" class="hover:text-green-700 transition uppercase"
+            >English</a
+          >
+          <a href="#" class="hover:text-green-700 transition uppercase"
+            >E-Book</a
+          >
+          <a href="#" class="hover:text-green-700 transition">สื่อรณรงค์</a>
+          <a href="#" class="hover:text-green-700 transition">สิทธิที่ดิน</a>
+          <a href="#" class="hover:text-green-700 transition">หนี้สินชาวนา</a>
+          <a href="#" class="hover:text-green-700 transition">ค้นหา</a>
+          {/* หน้าปัจจุบัน ทำสีเด่นๆ */}
+          <span
+            class="text-red-800 uppercase cursor-default border-b-2 border-red-800 pb-0.5"
+            >Mapping</span
+          >
+        </nav>
+      </div>
+    </header>
+    <main class="flex-grow w-full max-w-7xl mx-auto py-8 px-4">
       <div class="px-4">
         <h1 className="text-4xl font-bold text-center mb-2 text-gray-800">
           แผนที่เครือข่ายอาหารปลอดภัย
@@ -106,6 +162,93 @@ const networkData = await Promise.all(
         allLocations={mapData}
         allNetworks={networkData}
       />
-    </div>
+    </main>
+    {/* ================= FOOTER (เลียนแบบเว็บต้นฉบับ) ================= */}
+    <footer class="bg-[#e5e5e5] border-t border-gray-300 pt-10 pb-6 mt-auto">
+      <div
+        class="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8 text-gray-800"
+      >
+        {/* คอลัมน์ 1: ที่อยู่และติดต่อ */}
+        <div class="flex gap-4">
+          <img
+            src="https://landactionthai.org/images/2020/logo.png"
+            alt="Logo"
+            class="h-16 w-16 object-contain opacity-80"
+            onError={(e) => (e.target.style.display = "none")}
+          />
+          <div class="text-sm space-y-1.5">
+            <h4 class="font-bold text-base text-gray-900">
+              มูลนิธิชีวิตไท (Local Act)
+            </h4>
+            <p>
+              129/250 หมู่บ้านเพอร์เฟคเพลส รัตนาธิเบศร์<br />ถนนไทรม้า
+              ต.บางรักน้อย<br />อ.เมือง จ.นนทบุรี 11000
+            </p>
+            <p class="pt-2">
+              <strong>โทรศัพท์:</strong> 02 040 9969 | 090 178 7508
+            </p>
+            <p>
+              <strong>E-mail:</strong>
+              <a
+                href="mailto:localact@localact.org"
+                class="hover:text-blue-600 transition">localact@localact.org</a
+              >
+            </p>
+          </div>
+        </div>
+
+        {/* คอลัมน์ 2: โซเชียลมีเดีย */}
+        <div class="flex flex-col md:items-center">
+          <h4 class="font-bold text-gray-900 mb-3">ติดตามเราได้ที่</h4>
+          <div class="flex gap-3">
+            {/* Facebook */}
+            <a
+              href="https://www.facebook.com/LocalAct/"
+              target="_blank"
+              rel="noreferrer"
+              class="bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition"
+            >
+              <svg fill="currentColor" viewBox="0 0 24 24" class="h-5 w-5"
+                ><path
+                  d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"
+                ></path></svg
+              >
+            </a>
+            {/* YouTube */}
+            <a
+              href="https://www.youtube.com/"
+              target="_blank"
+              rel="noreferrer"
+              class="bg-red-600 text-white p-2 rounded-full hover:bg-red-700 transition"
+            >
+              <svg fill="currentColor" viewBox="0 0 24 24" class="h-5 w-5"
+                ><path
+                  d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"
+                ></path></svg
+              >
+            </a>
+          </div>
+        </div>
+
+        {/* คอลัมน์ 3: ป้ายกลับสู่เว็บหลัก */}
+        <div class="flex flex-col md:items-end text-sm">
+          <div
+            class="bg-white border-2 border-gray-800 p-4 rounded-lg shadow-sm text-center"
+          >
+            <h4
+              class="font-bold text-gray-800 mb-2 border-b border-gray-200 pb-2"
+            >
+              เข้าสู่เว็บไซต์หลัก
+            </h4>
+            <a
+              href="https://landactionthai.org"
+              class="inline-block mt-1 bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 transition shadow"
+            >
+              landactionthai.org
+            </a>
+          </div>
+        </div>
+      </div>
+    </footer>
   </body>
 </html>

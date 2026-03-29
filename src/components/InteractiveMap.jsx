@@ -66,10 +66,10 @@ export default function InteractiveMap({ allLocations, allNetworks }) {
   };
 
   return (
-    <div className="foodmap-container min-h-[600px] flex flex-col lg:flex-row gap-6 p-6 bg-gray-50">
+    <div className="foodmap-container min-h-[600px] flex flex-col lg:flex-row gap-6 p-6">
       
       {/* --- ส่วนที่ 1: แผนที่ SVG (ฝั่งซ้าย) --- */}
-      <div className="w-full lg:w-1/2 p-4 bg-white rounded-2xl shadow-sm border border-gray-100 flex items-center justify-center relative bg-blue-50 overflow-hidden">
+      <div className="w-full lg:w-1/2 p-4 bg-white  flex items-start justify-center relative bg-blue-50 overflow-hidden">
         
         <svg viewBox="90 350 150 140" className="w-full bg-white/50">
           {/* กรุงเทพฯ */}
@@ -138,7 +138,7 @@ export default function InteractiveMap({ allLocations, allNetworks }) {
       </div>
 
       {/* --- ส่วนรายชื่อและเครือข่าย (ฝั่งขวา) --- */}
-      <div className="w-full lg:w-1/2 bg-white p-7 rounded-2xl shadow-sm border border-gray-100 overflow-y-auto max-h-[650px]">
+      <div className="w-full lg:w-1/2 bg-white p-7 rounded-2xl shadow-sm border border-gray-100 overflow-y-auto max-h-[850px]">
         {/* Header และตัวกรองจังหวัด */}
         <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
           <h1 className="text-3xl font-extrabold text-gray-900">
