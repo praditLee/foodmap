@@ -19,6 +19,9 @@ export default defineConfig({
     plugins: [tailwindcss()],
     optimizeDeps: {
       include: ['@keystatic/core', 'lodash', 'lodash/debounce']
+    },
+    resolve: {
+      dedupe: ['react', 'react-dom']
     }
   },
 });

@@ -28,13 +28,18 @@ function keystaticToHTML(nodes) {
           return `<p class="mb-4">${childrenHTML}</p>`;
         case "heading":
           return `<h${node.level || 3} class="text-lg font-bold text-gray-800 mt-4 mb-2">${childrenHTML}</h${node.level || 3}>`;
+        case "unordered-list":
+          return `<ul class="list-disc pl-6 mb-4 space-y-2 text-gray-700">${childrenHTML}</ul>`;
+
+        case "ordered-list":
+          return `<ol class="list-decimal pl-6 mb-4 space-y-2 text-gray-700">${childrenHTML}</ol>`;
         case "list":
           return node.ordered
             ? `<ol class="list-decimal pl-5 mb-4">${childrenHTML}</ol>`
             : `<ul class="list-disc pl-5 mb-4">${childrenHTML}</ul>`;
         case "item":
         case "list-item":
-          return `<li class="mb-1">${childrenHTML}</li>`;
+          return `<li class="pl-1">${childrenHTML}</li>`;
         case "link":
           return `<a href="${node.href}" class="text-blue-600 underline" target="_blank">${childrenHTML}</a>`;
         case "divider":
@@ -56,8 +61,8 @@ const mapData = await Promise.all(
     const htmlContent = keystaticToHTML(astArray);
 
     return {
-      slug: loc.slug,
       ...loc.entry,
+      slug: loc.slug,
       contentHTML: htmlContent, // ส่ง HTML ที่เสร็จแล้วไปให้ React
     };
   }),
@@ -66,10 +71,14 @@ const mapData = await Promise.all(
 // 👇 แปลงข้อมูล Networks (เพื่อเอา HTML content)
 const networkData = await Promise.all(
   rawNetworks.map(async (net) => {
-    const astArray = await net.entry.content();
+    const astArray =
+      typeof net.entry.knowledgeSharingContent === "function"
+        ? await net.entry.knowledgeSharingContent()
+        : [];
+
     return {
-      slug: net.slug,
       ...net.entry,
+      slug: net.slug,
       contentHTML: keystaticToHTML(astArray),
     };
   }),
