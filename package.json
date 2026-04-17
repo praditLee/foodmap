@@ -9,15 +9,15 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/cloudflare": "^12.6.12",
-    "@astrojs/react": "^4.4.2",
+    "@astrojs/cloudflare": "^12.6.13",
+    "@astrojs/react": "^5.0.3",
     "@fontsource-variable/anuphan": "^5.2.8",
     "@keystatic/astro": "^5.0.6",
-    "@keystatic/core": "^0.5.48",
+    "@keystatic/core": "^0.5.50",
     "@tailwindcss/vite": "^4.1.18",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "astro": "^5.17.1",
+    "astro": "^5.18.1",
     "leaflet": "^1.9.4",
     "lodash": "^4.17.23",
     "lucide-react": "^0.564.0",
@@ -28,6 +28,7 @@
     "tailwindcss": "^4.1.18"
   },
   "devDependencies": {
-    "@types/leaflet": "^1.9.21"
+    "@types/leaflet": "^1.9.21",
+    "wrangler": "^4.82.2"
   }
 }

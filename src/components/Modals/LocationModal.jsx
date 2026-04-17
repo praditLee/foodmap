@@ -3,16 +3,36 @@ import React, { useState } from 'react';
 import { Navigation } from 'lucide-react';
 import ImageGallery from '../ImageGallery';
 
-// ฟังก์ชันช่วยเหลือสำหรับกำหนดสไตล์และชื่อมาตรฐาน
+// ฟังก์ชันช่วยเหลือสำหรับกำหนดสไตล์ ชื่อ และ "ไอคอน" ของมาตรฐาน
 const getStandardTag = (std) => {
-  const stdMap = {
-    pgs: { label: 'PGS', color: 'bg-green-100 text-green-700 border-green-200' },
-    organic_thailand: { label: 'Organic Thailand', color: 'bg-emerald-100 text-emerald-800 border-emerald-200' },
-    gap: { label: 'GAP', color: 'bg-blue-100 text-blue-700 border-blue-200' },
-    fda_otop: { label: 'OTOP', color: 'bg-orange-100 text-orange-700 border-orange-200' },
-    general: { label: 'ทั่วไป', color: 'bg-gray-100 text-gray-600 border-gray-200' },
+  const standardConfig = {
+    pgs: { 
+      label: 'PGS', 
+      color: 'text-green-700 bg-green-100 border-green-200',
+      icon: <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
+    },
+    organic_thailand: { 
+      label: 'Organic Thailand', 
+      color: 'text-emerald-700 bg-emerald-100 border-emerald-200',
+      icon: <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+    },
+    gap: { 
+      label: 'GAP (ปลอดภัย)', 
+      color: 'text-blue-700 bg-blue-100 border-blue-200',
+      icon: <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+    },
+    fda_otop: { 
+      label: 'อย./ มผช./ OTOP', 
+      color: 'text-orange-700 bg-orange-100 border-orange-200',
+      icon: <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    },
+    general: { 
+      label: 'ทั่วไป', 
+      color: 'text-gray-600 bg-gray-100 border-gray-200',
+      icon: <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+    },
   };
-  return stdMap[std] || { label: std, color: 'bg-gray-100 text-gray-600 border-gray-200' };
+  return standardConfig[std] || standardConfig.general;
 };
 
 // ฟังก์ชันช่วยเหลือสำหรับกำหนดสไตล์ของประเภทห่วงโซ่
@@ -38,7 +58,10 @@ export default function LocationModal({ locationData, onClose, onNetworkClick })
   };
 
   const supplyChainTag = getSupplyChainTag(locationData.supplyChainStage);
-
+  const usedStandards = locationData.productList 
+    ? Array.from(new Set(locationData.productList.flatMap(item => item.standards || [])))
+        .filter(std => std !== 'general')
+    : [];
   // ฟังก์ชันสำหรับ Copy เบอร์โทร
   const handleCopy = (text) => {
     navigator.clipboard.writeText(text);
@@ -131,40 +154,41 @@ export default function LocationModal({ locationData, onClose, onNetworkClick })
             </div>
           )}
 
+          {/* 👇 ส่วนแสดงผลผลิตภัณฑ์และไอคอนแบบใหม่ 👇 */}
           {locationData.productList && locationData.productList.length > 0 && (
             <div className="mb-8 border-b border-gray-100 pb-8">
               <h3 className="text-xl font-bold text-gray-800 mb-4">ผลผลิต / ผลิตภัณฑ์</h3>
               
-              <div className="flex flex-wrap gap-x-4 gap-y-5 mt-2">
+              <div className="flex flex-wrap gap-x-4 gap-y-4 mt-2">
                 {locationData.productList.map((item, index) => (
                   <button 
                     key={`prod-${index}`} 
                     onClick={() => item.productImage && setSelectedProductImage(item.productImage)}
-                    className={`relative flex flex-col justify-center px-4 py-4 bg-gray-50 rounded-xl border border-gray-200 min-w-[130px] text-center shadow-sm ${item.productImage ? 'hover:border-blue-300 hover:bg-blue-50 cursor-pointer' : 'cursor-default'}`} 
+                    className={`relative flex flex-col justify-center px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 min-w-[130px] text-center shadow-sm ${item.productImage ? 'hover:border-blue-300 hover:bg-blue-50 cursor-pointer' : 'cursor-default'}`} 
                   >
-                    {/* ชื่อสินค้า */}
                     <span className="font-semibold text-gray-800 text-base">{item.name}</span>
                     
                     {item.productImage && (
-                      <svg xmlns="http://www.w3.org/2000/svg" className="absolute bottom-1 right-1 h-3.5 w-3.5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="absolute bottom-1 right-1 h-3 w-3 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
                       </svg>
                     )}
 
-                    {/* Tag มาตรฐาน */}
+                    {/* แสดงไอคอนมาตรฐาน (แบบวงกลมเล็กๆ มุมขวาบน) */}
                     {item.standards && item.standards.length > 0 && (
-                      <div className="absolute -top-3 -right-2 flex flex-row flex-wrap justify-end gap-1 z-10">
+                      <div className="absolute -top-2 -right-2 flex flex-row flex-wrap justify-end gap-1 z-10">
                         {item.standards
                           .filter(std => std !== 'general')
                           .map((std) => {
                             const tag = getStandardTag(std);
                             return (
-                              <span 
+                              <div 
                                 key={`std-${std}`} 
-                                className={`inline-flex items-center px-2 py-0.5 text-[10px] rounded-full font-bold border shadow-sm ${tag.color}`}
+                                className={`flex items-center justify-center w-6 h-6 rounded-full border shadow-sm bg-white ${tag.color}`}
+                                title={tag.label} // เอาเมาส์ชี้แล้วมีชื่อบอก
                               >
-                                {tag.label}
-                              </span>
+                                {tag.icon}
+                              </div>
                             );
                         })}
                       </div>
@@ -172,8 +196,29 @@ export default function LocationModal({ locationData, onClose, onNetworkClick })
                   </button>
                 ))}
               </div>
+
+              {/* 👇 คำอธิบายสัญลักษณ์ (Legend) แสดงเฉพาะที่มีในหน้านั้น 👇 */}
+              {usedStandards.length > 0 && (
+                <div className="mt-6 pt-4 border-t border-gray-100 bg-gray-50/50 rounded-lg p-3">
+                  <p className="text-xs text-gray-500 font-semibold mb-2 uppercase tracking-wide">คำอธิบายสัญลักษณ์:</p>
+                  <div className="flex flex-wrap gap-x-5 gap-y-2">
+                    {usedStandards.map(std => {
+                      const tag = getStandardTag(std);
+                      return (
+                        <div key={`legend-${std}`} className="flex items-center gap-1.5">
+                          <div className={`flex items-center justify-center w-5 h-5 rounded-full border bg-white ${tag.color}`}>
+                            {tag.icon}
+                          </div>
+                          <span className="text-sm text-gray-700 font-medium">{tag.label}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           )}
+          {/* 👆 สิ้นสุดส่วนแสดงผลผลิต 👆 */}
 
           {/* ช่องทางการสื่อสารแบบใหม่ */}
           {locationData.contacts && locationData.contacts.length > 0 && (
