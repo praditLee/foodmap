@@ -8,7 +8,21 @@ export default function InteractiveMap({ allLocations, allNetworks }) {
   const [selectedNetwork, setSelectedNetwork] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeStage, setActiveStage] = useState(null);
-
+  // 👇 1. เพิ่ม State สำหรับจับตำแหน่งเมาส์และจังหวัดที่เอาเมาส์ชี้ 👇
+  const [hoveredProvince, setHoveredProvince] = useState(null);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+    // เอาไว้จำว่าผู้ใช้กำลังเอาเมาส์ชี้สถานที่ไหนอยู่ (เพื่อทำแอนิเมชันเชื่อม 2 ฝั่ง)
+  const [hoveredLocName, setHoveredLocName] = useState(null);
+  // 👇 2. ฟังก์ชันเช็คว่าจังหวัดนี้มีข้อมูลตรงกับ "ตัวกรอง" ที่กดอยู่ไหม (เพื่อทำสีทึบ/สีจาง)
+  const hasActiveLocations = (provinceSlug) => {
+    // ถ้าไม่ได้เลือกตัวกรองห่วงโซ่ และไม่ได้พิมพ์ค้นหา ให้ถือว่ามีข้อมูลทั้งหมด (สว่างทุกจังหวัด)
+    if (!activeStage && searchTerm.trim() === '') return true;
+    
+    // เช็คว่าในรายชื่อที่ถูกกรองแล้ว (ด้านขวา) มีจังหวัดนี้หลงเหลืออยู่ไหม
+    return filteredLocations.some(loc => loc.province === provinceSlug);
+  };
+    // เอาไว้จำสถานะการเปิด/ปิด Accordion ของข้อมูลเครือข่ายระดับจังหวัด
+  const [isProvinceInfoExpanded, setIsProvinceInfoExpanded] = useState(false);
   useEffect(() => {
     // เช็คว่าถ้ามีการเปิด Modal สถานที่ และมีค่า slug
     if (selectedLocation && selectedLocation.slug) {
@@ -23,6 +37,26 @@ export default function InteractiveMap({ allLocations, allNetworks }) {
       window.history.pushState(null, '', window.location.pathname);
     }
   }, [selectedLocation, selectedNetwork]);
+
+  // ฟังก์ชันสุ่มพิกัดกระจายตัวรอบๆ จุด Anchor
+  // ใช้ index เป็นตัวตั้งต้น เพื่อให้ตำแหน่งของแต่ละที่คงที่เสมอ
+  const getScatteredPosition = (anchorX, anchorY, index, spreadX = 4, spreadY = 4) => {
+    // รัศมีการกระจาย (ยิ่งเยอะ หมุดยิ่งกระจายกว้าง) ปรับเลข 8 เป็นเลขอื่นได้ครับ
+    const radius = 8; 
+    
+    // คำนวณมุมและการกระจายแบบสุ่มจาก index
+    const angle = index * 137.5; // รหัสลับองศาทองคำ (Golden Angle) ทำให้กระจายสวย
+    const distance = Math.sqrt(index + 1); // ใช้ Square Root จะทำให้เกาะกลุ่มกันสวยกว่า
+    
+    // เอา spreadX, spreadY มาคูณ เพื่อให้วงรีบีบตามรูปทรงจังหวัด
+    const offsetX = Math.sin(angle) * distance * spreadX;
+    const offsetY = Math.cos(angle) * distance * spreadY;
+
+    return {
+      x: anchorX + offsetX,
+      y: anchorY + offsetY
+    };
+  };
 
   // กรองสถานที่ตามจังหวัดที่เลือก และการค้นหา
   const filteredLocations = useMemo(() => {
@@ -67,11 +101,33 @@ export default function InteractiveMap({ allLocations, allNetworks }) {
 
   // 👇 1. ตั้งค่าพิกัดซูมของแต่ละจังหวัด (ปรับตัวเลข x, y ได้ตามความเหมาะสมของแผนที่จริง)
   const zoomConfig = {
-    'suphanburi': { scale: 2.0, x: 0, y: 3 },   // ตัวอย่าง: ซูม 2.2 เท่า, ขยับแกน X 15%, Y 20%
-    'nakhonpathom': { scale: 2.8, x: -12, y: -28 },
-    'nonthaburi': { scale: 4.2, x: -28, y: -25 },
-    'chainat': { scale: 2.8, x: -8, y: 30 },
-    // ⚠️ หมายเหตุ: เปลี่ยน 'province-...' เป็นรหัสจังหวัด (slug) ที่คุณใช้จริงนะครับ
+    // 📌 ชัยนาท (ค่อนข้างกลม ใช้ 1-2 จุดก็พอ)
+    'chainat': { 
+      scale:  2.8, x: -8, y: 30 , 
+      anchors: [{ x: 60, y: 22 }], 
+      spreadX: 2, spreadY: 2 
+    }, 
+    // 📌 สุพรรณบุรี (ยาวเรียว เราจะกำหนดจุดปลอดภัย 3 จุด เรียงจากบนลงล่าง)
+    'suphanburi': { 
+      scale: 2.0, x: 0, y: 3, 
+      anchors: [
+        { x: 42, y: 30 }, // โซนบน (อ.ด่านช้าง/เดิมบางฯ)
+        { x: 60, y: 45 }, // โซนกลาง (อ.เมือง/สามชุก)
+        { x: 60, y: 55 }  // โซนล่าง (อ.สองพี่น้อง/อู่ทอง)
+      ], 
+      spreadX: 1.5, spreadY: 1.5 // ⚠️ สำคัญ: ลดค่า spread ลง เพื่อให้กระจุกอยู่ใกล้ๆ จุดย่อย ไม่บานออกไปไกล
+    },
+    // 📌 นครปฐม และ นนทบุรี
+    'nakhonpathom': { 
+      scale: 2.8, x: -12, y: -28, 
+      anchors: [{ x: 65, y: 73 }], // ตัวอย่างใส่ 2 จุด
+      spreadX: 2, spreadY: 2 
+    },
+    'nonthaburi': { 
+      scale: 4.2, x: -28, y: -25, 
+      anchors: [{ x: 70, y: 80 }], 
+      spreadX: 2, spreadY: 3 
+    },
   };
 
   // 👇 2. ฟังก์ชันนับจำนวนสถานที่ในจังหวัดนั้นๆ
@@ -80,26 +136,32 @@ export default function InteractiveMap({ allLocations, allNetworks }) {
     return allLocations.filter(loc => loc.province === provinceSlug).length;
   };
 
-  // ฟังก์ชันจัดการเมื่อคลิกพื้นที่จังหวัด
+    // ฟังก์ชันจัดการเมื่อคลิกพื้นที่จังหวัด
   const handleProvinceClick = (provinceSlug) => {
     if (activeProvince === provinceSlug) {
-      // ถ้าคลิกจังหวัดที่กำลังเลือกอยู่ (คลิกซ้ำ) -> ให้เคลียร์ค่าเป็น null (ซูมออก)
+      // ถ้าคลิกจังหวัดที่กำลังเลือกอยู่ (คลิกซ้ำเพื่อซูมออก)
       setActiveProvince(null);
+      
+      // 👇 สั่งให้ปิด Accordion กลับไปด้วยตอนซูมออก
+      setIsProvinceInfoExpanded(false); 
     } else {
-      // ถ้าคลิกจังหวัดใหม่ -> ให้เลือกจังหวัดนั้น (ซูมเข้า)
+      // ถ้าคลิกจังหวัดใหม่ (ซูมเข้า)
       setActiveProvince(provinceSlug);
+      
+      // 👇 สั่งให้เปิด Accordion กางรอไว้เลย! (ค่า Default เมื่อคลิก)
+      setIsProvinceInfoExpanded(true); 
     }
   };
 
   return (
-    <div className="foodmap-container min-h-[600px] flex flex-col lg:flex-row gap-6 p-6">
+    <div className="foodmap-container flex flex-col lg:flex-row gap-6 p-6">
       
       {/* --- ส่วนที่ 1: แผนที่ SVG (ฝั่งซ้าย) --- */}
       <div className="w-full lg:w-1/2 p-4 bg-white  flex items-start justify-center relative bg-blue-50 overflow-hidden">
         
         {/* 👇 ป้ายแจ้งจำนวนสถานที่ (จะโผล่มาเฉพาะตอนคลิกเลือกจังหวัดแล้ว) 👇 */}
           {activeProvince && (
-            <div className="absolute top-6 left-1/2 -translate-x-1/2 z-10 bg-white/95 backdrop-blur-sm px-6 py-2.5 rounded-full shadow-lg border border-gray-100 flex items-center gap-3 animate-[fadeIn_0.3s_ease-out]">
+            <div className="absolute z-10 top-6 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-sm px-6 py-2.5 rounded-full shadow-lg border border-gray-100 flex items-center gap-3 animate-[fadeIn_0.3s_ease-out]">
               <span className="font-bold text-gray-800 text-lg">
                 📍 {getProvinceLabel(activeProvince)} {/* เปลี่ยนเป็นฟังก์ชันดึงชื่อจังหวัดของคุณ */}
               </span>
@@ -109,13 +171,37 @@ export default function InteractiveMap({ allLocations, allNetworks }) {
             </div>
           )}
 {/* 👇 กรอบหน้าต่างครอบแผนที่ (บังคับให้ส่วนที่ซูมล้นออกไปถูกซ่อนไว้) 👇 */}
-          <div className="w-full aspect-square md:aspect-video lg:aspect-square bg-blue-50/50 rounded-2xl overflow-hidden border border-gray-100 relative p-4">
-            
+          <div className="w-full aspect-square bg-blue-50/50 rounded-2xl overflow-hidden border border-gray-100 relative p-4"
+          // ตรวจจับการขยับของเมาส์เพื่อขยับ Tooltip
+            onMouseMove={(e) => {
+              // ใช้พิกัดเมาส์บนหน้าจอตรงๆ เลย
+              setMousePos({
+                x: e.clientX,
+                y: e.clientY
+              });
+            }}
+
+            onMouseLeave={() => setHoveredProvince(null)}
+            >
+            {/* 👇 กล่อง Tooltip ที่จะวิ่งตามเมาส์ (โผล่มาตอนชี้จังหวัดที่ไม่ได้คลิก) 👇 */}
+            {hoveredProvince && !activeProvince && (
+              <div 
+                className="fixed z-[9999] pointer-events-none bg-gray-900/90 backdrop-blur text-white px-4 py-2 rounded-xl shadow-xl text-sm font-semibold transition-opacity duration-150 whitespace-nowrap flex flex-col gap-1"
+                style={{
+                  left: `${mousePos.x + 15}px`, 
+                  top: `${mousePos.y + 15}px`,
+                }}
+              >
+                <div className="text-base text-blue-200 border-b border-gray-700 pb-1 mb-1">
+                  📍 {getProvinceLabel(hoveredProvince)}
+                </div>
+                <div>มีสถานที่ทั้งหมด <span className="text-yellow-400 font-bold">{getProvinceLocationCount(hoveredProvince)}</span> แห่ง</div>
+              </div>
+            )}
             {/* 👇 ตัวแอนิเมชันซูมแผนที่ 👇 */}
             <div 
-              className="w-full h-full transition-transform duration-700 ease-in-out flex items-center justify-center"
+              className="w-full h-full transition-transform duration-700 ease-in-out flex items-center justify-center relative"
               style={{
-                // ถ้ามีจังหวัดถูกเลือก ให้ดึงค่าซูมมาใช้ ถ้าไม่มีให้ซูม 1 เท่าและอยู่ตรงกลาง
                 transform: activeProvince && zoomConfig[activeProvince]
                   ? `scale(${zoomConfig[activeProvince].scale}) translate(${zoomConfig[activeProvince].x}%, ${zoomConfig[activeProvince].y}%)`
                   : 'scale(1) translate(0%, 0%)',
@@ -154,29 +240,127 @@ export default function InteractiveMap({ allLocations, allNetworks }) {
               
               {/* 1. ชัยนาท */}
               <g onClick={() => handleProvinceClick('chainat')} className="cursor-pointer group">
-                <path id="chainat"  d="m 186.15844,355.80255 2.39,1 0.23,1.21 0.55,-0.29 1.33,1.07 2.15,0.67 2.45,2.84 1.69,2.46 0.47,2.75 0.92,1.19 0.97,3.46 3.31,2.43 -0.01,1.31 0.49,0.65 -0.72,0.56 0,0 -3.15,1.9 -0.16,1.19 -3.91,0.58 -0.3,0.41 0.08,1.87 0.92,0.18 0.71,1.07 0.81,-0.17 0.11,0.56 -0.67,0.8 1.19,1.92 -0.39,0.69 -0.83,0.53 -3.91,-0.66 0,0 -4.49,2.88 -1.53,-2.32 -4.87,-1.03 -0.27,0.58 0.64,1.05 -0.26,1.3 -5.24,1.07 -1.02,-0.57 -4.47,-0.13 -1.99,-1.89 -1.73,0.27 -2.29,-0.5 -1.93,-1.24 -2.9,-0.06 -0.41,-1.01 0,0 0.54,-0.24 0.37,-1.47 3.28,-1.65 0.39,-1.16 -0.75,-0.92 2.24,-2.69 -3.92,-4.84 0.79,-0.75 -2.46,-3.34 -0.07,-0.88 0.65,-0.68 -0.71,-0.86 -0.01,-1.39 4.5,-2.79 4.24,0.48 1.67,0.56 0.55,1.1 4.96,-1.24 0.52,0.41 2.68,-0.14 1.3,0.74 1.12,-0.35 0.91,0.54 0.17,0.9 1.43,-1.49 0.05,-1.57 1.42,-1.26 -0.15,-0.95 -1.56,-1.35 0.45,-0.7 1.62,0.36 -1.2,-1.92 0.17,-0.68 z" className={`transition-colors duration-300 stroke-white stroke-[0.5] ${activeProvince === 'chainat' ? 'fill-orange-500' : 'fill-orange-200 hover:fill-orange-400'}`} />
-                <text x="180" y="375" fontSize="4" textAnchor="middle" className="pointer-events-none font-bold drop-shadow-md">ชัยนาท</text>
+                <path id="chainat" 
+                onClick={() => handleProvinceClick('chainat')} 
+                onMouseEnter={() => setHoveredProvince('chainat')}
+                onMouseLeave={() => setHoveredProvince(null)}
+                d="m 186.15844,355.80255 2.39,1 0.23,1.21 0.55,-0.29 1.33,1.07 2.15,0.67 2.45,2.84 1.69,2.46 0.47,2.75 0.92,1.19 0.97,3.46 3.31,2.43 -0.01,1.31 0.49,0.65 -0.72,0.56 0,0 -3.15,1.9 -0.16,1.19 -3.91,0.58 -0.3,0.41 0.08,1.87 0.92,0.18 0.71,1.07 0.81,-0.17 0.11,0.56 -0.67,0.8 1.19,1.92 -0.39,0.69 -0.83,0.53 -3.91,-0.66 0,0 -4.49,2.88 -1.53,-2.32 -4.87,-1.03 -0.27,0.58 0.64,1.05 -0.26,1.3 -5.24,1.07 -1.02,-0.57 -4.47,-0.13 -1.99,-1.89 -1.73,0.27 -2.29,-0.5 -1.93,-1.24 -2.9,-0.06 -0.41,-1.01 0,0 0.54,-0.24 0.37,-1.47 3.28,-1.65 0.39,-1.16 -0.75,-0.92 2.24,-2.69 -3.92,-4.84 0.79,-0.75 -2.46,-3.34 -0.07,-0.88 0.65,-0.68 -0.71,-0.86 -0.01,-1.39 4.5,-2.79 4.24,0.48 1.67,0.56 0.55,1.1 4.96,-1.24 0.52,0.41 2.68,-0.14 1.3,0.74 1.12,-0.35 0.91,0.54 0.17,0.9 1.43,-1.49 0.05,-1.57 1.42,-1.26 -0.15,-0.95 -1.56,-1.35 0.45,-0.7 1.62,0.36 -1.2,-1.92 0.17,-0.68 z" 
+                className={`transition-colors duration-300 stroke-white stroke-[0.5] 
+                ${activeProvince === 'chainat' 
+                      ? 'fill-orange-400 drop-shadow-lg' // สีตอนคลิกซูม (เด่นสุด)
+                      : hasActiveLocations('chainat')
+                        ? 'fill-orange-200 hover:fill-orange-300' // สีปกติ (ถ้ามีข้อมูลตรงตัวกรอง)
+                        : 'fill-gray-200 opacity-60 hover:fill-gray-300' // สีเทาจางๆ (ถ้าไม่มีข้อมูลตรงกับตัวกรอง)
+                    }`}
+                />
+                <text x="180" y="375" fontSize="4" textAnchor="middle" 
+                className={`transition-opacity duration-300 pointer-events-none font-bold drop-shadow-md ${activeProvince ? 'opacity-0' : 'opacity-100'}`}>ชัยนาท</text>
               </g>
 
               {/* 2. สุพรรณบุรี */}
               <g onClick={() => handleProvinceClick('suphanburi')} className="cursor-pointer group">
-                <path id="suphanburi" d="m 131.02844,385.18255 0.01,-0.85 1.13,-0.53 0.39,-0.75 -0.76,-0.96 0.39,-1.14 1.27,-1.09 -0.06,-0.67 0.99,-0.08 2.08,2.3 3.62,-0.01 -0.15,0.81 0.76,2.36 1.1,1.35 0.44,-0.52 3.75,0.4 5.29,2.66 3.1,0.54 0.15,-2.13 -0.41,-0.58 0.49,-0.79 1.73,0.09 2.02,0.94 1.5,-0.45 0.26,0.3 0,0 0.41,1.01 2.9,0.06 1.93,1.24 2.29,0.5 1.73,-0.27 1.99,1.89 4.47,0.13 1.02,0.57 5.24,-1.07 0.26,-1.3 -0.64,-1.05 0.27,-0.58 4.87,1.03 1.53,2.32 4.49,-2.88 0,0 -0.38,1.05 -0.98,0.32 0.01,0.66 0.54,1.34 2.15,-0.08 -0.43,0.58 -0.58,-0.05 0.21,1 0.98,0.11 -0.52,0.66 0.08,2.12 -0.93,2.27 1.57,1.34 0,0 -0.33,0.71 -0.94,0.38 -0.19,2.35 0.69,1.76 -0.49,2.39 1.47,2.06 -2.4,2.97 1.02,2.05 -0.98,1.3 0.85,1.44 -0.11,1.13 1.28,1.07 0.83,1.64 1.01,0.12 0,0 -0.59,1.49 0.29,1.66 1.65,0.51 0.56,1.81 -0.95,1.39 0.02,3.97 -1.66,2.82 -0.04,5.18 0,0 -1.86,1.85 -4,1.09 -1.61,1.44 -12.82,0.75 -0.89,1.09 -1.54,0.34 -2.43,2.93 -1.74,0.89 0,0 -2.18,-0.43 -0.08,-1.02 -0.89,-0.4 -0.39,-0.94 -2.49,0.59 -1.41,-0.44 -0.27,-0.64 0.1,-2.56 1.05,-2.89 0.79,0.23 0.65,-1.19 1.14,0.59 1.38,-1.09 0.43,-1.47 0.63,0.17 0.19,-5.84 -0.63,-1.85 0.46,-0.82 -0.26,-3.17 0.46,-1.18 -0.56,-1.91 0.34,-4.4 -0.6,-2.9 0.66,-1.99 -1.61,-1.07 0.62,-1.61 1.73,-0.42 -0.71,-0.99 -0.26,-1.6 -1.48,-1.92 -0.06,-0.88 -1.35,-0.73 1.37,-1.33 0.04,-0.88 -0.94,-0.58 -1.75,0.3 -1.87,-0.47 -0.82,-1 -1.78,-0.67 -2.73,-2.1 -2.29,1.54 -2.39,-0.57 -0.75,0.44 -1.45,-1.24 -0.27,0.59 0.39,1.78 -0.62,1.45 0.82,1.13 -0.19,0.56 -2.39,1.38 -3.35,0.39 -0.22,-1.7 -1.64,-3.77 -1.18,-0.34 -2.08,1.03 -2.01,-0.43 -1.49,-1.41 -0.34,-0.96 -1.45,-0.47 -1.07,-1.43 -0.76,-1.88 2.31,-2.09 0.35,-2.18 -0.71,-0.96 0.65,-0.86 -1.16,-2.27 z" className={`transition-colors duration-300 stroke-white stroke-[0.5] ${activeProvince === 'suphanburi' ? 'fill-green-500' : 'fill-green-200 hover:fill-green-400'}`} />
-                <text x="180" y="415" fontSize="4" textAnchor="middle" className="pointer-events-none font-bold drop-shadow-md">สุพรรณบุรี</text>
+                <path id="suphanburi" 
+                onClick={() => handleProvinceClick('suphanburi')} 
+                onMouseEnter={() => setHoveredProvince('suphanburi')}
+                onMouseLeave={() => setHoveredProvince(null)}
+                d="m 131.02844,385.18255 0.01,-0.85 1.13,-0.53 0.39,-0.75 -0.76,-0.96 0.39,-1.14 1.27,-1.09 -0.06,-0.67 0.99,-0.08 2.08,2.3 3.62,-0.01 -0.15,0.81 0.76,2.36 1.1,1.35 0.44,-0.52 3.75,0.4 5.29,2.66 3.1,0.54 0.15,-2.13 -0.41,-0.58 0.49,-0.79 1.73,0.09 2.02,0.94 1.5,-0.45 0.26,0.3 0,0 0.41,1.01 2.9,0.06 1.93,1.24 2.29,0.5 1.73,-0.27 1.99,1.89 4.47,0.13 1.02,0.57 5.24,-1.07 0.26,-1.3 -0.64,-1.05 0.27,-0.58 4.87,1.03 1.53,2.32 4.49,-2.88 0,0 -0.38,1.05 -0.98,0.32 0.01,0.66 0.54,1.34 2.15,-0.08 -0.43,0.58 -0.58,-0.05 0.21,1 0.98,0.11 -0.52,0.66 0.08,2.12 -0.93,2.27 1.57,1.34 0,0 -0.33,0.71 -0.94,0.38 -0.19,2.35 0.69,1.76 -0.49,2.39 1.47,2.06 -2.4,2.97 1.02,2.05 -0.98,1.3 0.85,1.44 -0.11,1.13 1.28,1.07 0.83,1.64 1.01,0.12 0,0 -0.59,1.49 0.29,1.66 1.65,0.51 0.56,1.81 -0.95,1.39 0.02,3.97 -1.66,2.82 -0.04,5.18 0,0 -1.86,1.85 -4,1.09 -1.61,1.44 -12.82,0.75 -0.89,1.09 -1.54,0.34 -2.43,2.93 -1.74,0.89 0,0 -2.18,-0.43 -0.08,-1.02 -0.89,-0.4 -0.39,-0.94 -2.49,0.59 -1.41,-0.44 -0.27,-0.64 0.1,-2.56 1.05,-2.89 0.79,0.23 0.65,-1.19 1.14,0.59 1.38,-1.09 0.43,-1.47 0.63,0.17 0.19,-5.84 -0.63,-1.85 0.46,-0.82 -0.26,-3.17 0.46,-1.18 -0.56,-1.91 0.34,-4.4 -0.6,-2.9 0.66,-1.99 -1.61,-1.07 0.62,-1.61 1.73,-0.42 -0.71,-0.99 -0.26,-1.6 -1.48,-1.92 -0.06,-0.88 -1.35,-0.73 1.37,-1.33 0.04,-0.88 -0.94,-0.58 -1.75,0.3 -1.87,-0.47 -0.82,-1 -1.78,-0.67 -2.73,-2.1 -2.29,1.54 -2.39,-0.57 -0.75,0.44 -1.45,-1.24 -0.27,0.59 0.39,1.78 -0.62,1.45 0.82,1.13 -0.19,0.56 -2.39,1.38 -3.35,0.39 -0.22,-1.7 -1.64,-3.77 -1.18,-0.34 -2.08,1.03 -2.01,-0.43 -1.49,-1.41 -0.34,-0.96 -1.45,-0.47 -1.07,-1.43 -0.76,-1.88 2.31,-2.09 0.35,-2.18 -0.71,-0.96 0.65,-0.86 -1.16,-2.27 z" className={`transition-colors duration-300 stroke-white stroke-[0.5] 
+                ${activeProvince === 'suphanburi' 
+                ? 'fill-green-400 drop-shadow-lg' // สีตอนคลิกซูม (เด่นสุด)
+                      : hasActiveLocations('suphanburi')
+                        ? 'fill-green-200 hover:fill-green-300' // สีปกติ (ถ้ามีข้อมูลตรงตัวกรอง)
+                        : 'fill-gray-200 opacity-60 hover:fill-gray-300' // สีเทาจางๆ (ถ้าไม่มีข้อมูลตรงกับตัวกรอง)
+                    }`} />
+                <text x="180" y="415" fontSize="4" textAnchor="middle" 
+                className={`transition-opacity duration-300 pointer-events-none font-bold drop-shadow-md ${activeProvince ? 'opacity-0' : 'opacity-100'}`}>สุพรรณบุรี</text>
               </g>
 
               {/* 3. นครปฐม */}
               <g onClick={() => handleProvinceClick('nakhonpathom')} className="cursor-pointer group">
-                <path id="nakhonpathom" d="m 195.58844,439.50255 0.29,2.46 2.52,0.29 -0.28,3.08 0,0 -0.97,8.03 0.69,0.52 -0.37,0.96 1.87,1.69 -2.27,2.89 0.88,0.73 2.82,6.08 0,0 0.67,1.54 0.14,4.58 0,0 -0.72,0.87 -2.31,0.7 -0.21,1.21 -1.19,0.81 -0.39,-0.22 -2.28,1.04 -0.71,-1.22 -2,0.49 -0.35,-0.62 -0.39,0.53 -0.63,-0.47 -2.13,0.46 -2.02,2.23 -2.52,-0.09 0,0 -0.49,-0.12 0.51,-2.99 -2.16,0.28 -0.61,-0.73 0.11,-3.53 -1.84,1.16 -3.17,0.32 -0.68,-0.81 -0.19,-1.13 0.74,-0.79 0.39,-1.68 0.9,-0.32 -0.03,-0.64 -0.48,-0.21 -0.36,-1.58 -1.04,0.38 -0.55,-0.9 -1.55,-0.27 -0.62,0.42 0.73,-2.15 -1.03,-2.1 1.22,-0.23 0.75,-2.13 -3.31,-0.84 0,0 -0.52,-0.97 -1.08,-0.52 -0.57,-1.89 -1.02,-0.09 1.6,-2.95 -0.68,-1.18 0,0 1.74,-0.89 2.43,-2.93 1.54,-0.34 0.89,-1.09 12.82,-0.75 1.61,-1.44 4,-1.09 z" className={`transition-colors duration-300 stroke-white stroke-[0.5] ${activeProvince === 'nakhonpathom' ? 'fill-yellow-500' : 'fill-yellow-200 hover:fill-yellow-400'}`} />
-                <text x="185" y="460" fontSize="4" textAnchor="middle" className="pointer-events-none font-bold drop-shadow-md">นครปฐม</text>
+                <path id="nakhonpathom" 
+                onClick={() => handleProvinceClick('nakhonpathom')} 
+                onMouseEnter={() => setHoveredProvince('nakhonpathom')}
+                onMouseLeave={() => setHoveredProvince(null)}
+                d="m 195.58844,439.50255 0.29,2.46 2.52,0.29 -0.28,3.08 0,0 -0.97,8.03 0.69,0.52 -0.37,0.96 1.87,1.69 -2.27,2.89 0.88,0.73 2.82,6.08 0,0 0.67,1.54 0.14,4.58 0,0 -0.72,0.87 -2.31,0.7 -0.21,1.21 -1.19,0.81 -0.39,-0.22 -2.28,1.04 -0.71,-1.22 -2,0.49 -0.35,-0.62 -0.39,0.53 -0.63,-0.47 -2.13,0.46 -2.02,2.23 -2.52,-0.09 0,0 -0.49,-0.12 0.51,-2.99 -2.16,0.28 -0.61,-0.73 0.11,-3.53 -1.84,1.16 -3.17,0.32 -0.68,-0.81 -0.19,-1.13 0.74,-0.79 0.39,-1.68 0.9,-0.32 -0.03,-0.64 -0.48,-0.21 -0.36,-1.58 -1.04,0.38 -0.55,-0.9 -1.55,-0.27 -0.62,0.42 0.73,-2.15 -1.03,-2.1 1.22,-0.23 0.75,-2.13 -3.31,-0.84 0,0 -0.52,-0.97 -1.08,-0.52 -0.57,-1.89 -1.02,-0.09 1.6,-2.95 -0.68,-1.18 0,0 1.74,-0.89 2.43,-2.93 1.54,-0.34 0.89,-1.09 12.82,-0.75 1.61,-1.44 4,-1.09 z" className={`transition-colors duration-300 stroke-white stroke-[0.5] 
+                ${activeProvince === 'nakhonpathom' 
+                ? 'fill-yellow-500 drop-shadow-lg' 
+                : hasActiveLocations('nakhonpathom')
+                 ? 'fill-yellow-200 hover:fill-yellow-400'
+                 : 'fill-gray-200 opacity-60 hover:fill-gray-300'
+                  }`} />
+                <text x="185" y="460" fontSize="4" textAnchor="middle" 
+                className={`transition-opacity duration-300 pointer-events-none font-bold drop-shadow-md ${activeProvince ? 'opacity-0' : 'opacity-100'}`}>นครปฐม</text>
               </g>
 
               {/* 4. นนทบุรี */}
               <g onClick={() => handleProvinceClick('nonthaburi')} className="cursor-pointer group">
-                <path id="nonthaburi" d="m 202.47844,446.04255 -0.84,4.15 2.08,4.32 4.53,0.73 1.64,1.02 0.6,-0.32 2.51,2.39 2.11,-0.56 0.59,-0.75 1.59,0.44 0,0 -1.35,6.88 -2.35,1.71 -0.13,0.52 0.58,0.31 -1.01,0.87 -2.05,0.77 -0.75,-0.59 -8.74,-0.44 -0.72,-1.26 0,0 -2.82,-6.08 -0.88,-0.73 2.27,-2.89 -1.87,-1.69 0.37,-0.96 -0.69,-0.52 0.97,-8.03 0,0 1.44,-1.01 2.31,0 z" className={`transition-colors duration-300 stroke-white stroke-[0.5] ${activeProvince === 'nonthaburi' ? 'fill-purple-500' : 'fill-purple-300 hover:fill-purple-500'}`} />
-                <text x="208" y="463" fontSize="4" textAnchor="middle" className="pointer-events-none font-bold drop-shadow-md">นนทบุรี</text>
+                <path id="nonthaburi" 
+                onClick={() => handleProvinceClick('nonthaburi')} 
+                onMouseEnter={() => setHoveredProvince('nonthaburi')}
+                onMouseLeave={() => setHoveredProvince(null)}
+                d="m 202.47844,446.04255 -0.84,4.15 2.08,4.32 4.53,0.73 1.64,1.02 0.6,-0.32 2.51,2.39 2.11,-0.56 0.59,-0.75 1.59,0.44 0,0 -1.35,6.88 -2.35,1.71 -0.13,0.52 0.58,0.31 -1.01,0.87 -2.05,0.77 -0.75,-0.59 -8.74,-0.44 -0.72,-1.26 0,0 -2.82,-6.08 -0.88,-0.73 2.27,-2.89 -1.87,-1.69 0.37,-0.96 -0.69,-0.52 0.97,-8.03 0,0 1.44,-1.01 2.31,0 z" className={`transition-colors duration-300 stroke-white stroke-[0.5] 
+                ${activeProvince === 'nonthaburi' 
+                ? 'fill-purple-500 drop-shadow-lg' 
+                : hasActiveLocations('nonthaburi')
+                 ? 'fill-purple-200 hover:fill-purple-400'
+                 : 'fill-gray-200 opacity-60 hover:fill-gray-300'
+                  }`} />
+                <text x="208" y="463" fontSize="4" textAnchor="middle" 
+                className={`transition-opacity duration-300 pointer-events-none font-bold drop-shadow-md ${activeProvince ? 'opacity-0' : 'opacity-100'}`}>นนทบุรี</text>
               </g>
 
             </svg>
+            {/* 👇 วาดหมุด (Pins) เฉพาะจังหวัดที่ถูกเลือก (activeProvince) 👇 */}
+              {activeProvince && zoomConfig[activeProvince] && filteredLocations
+                .filter(loc => loc.province === activeProvince)
+                .map((loc, index) => {
+                  const config = zoomConfig[activeProvince];
+                  
+                  // 👇 1. เลือกว่าสถานที่นี้จะได้ไปอยู่ Anchor ย่อยตัวไหน (ใช้การสลับตาม index)
+                  const anchorIndex = index % config.anchors.length;
+                  const targetAnchor = config.anchors[anchorIndex];
+
+                  // 👇 2. หาตำแหน่งกระจายตัวจาก Anchor ย่อยนั้นๆ
+                  // ใช้ Math.floor เพื่อให้หมุดที่อยู่ Anchor เดียวกัน ขยับตัวออกห่างกัน
+                  const pos = getScatteredPosition(
+                    targetAnchor.x, 
+                    targetAnchor.y, 
+                    Math.floor(index / config.anchors.length), 
+                    config.spreadX,
+                    config.spreadY
+                  );
+                  
+                  const inverseScale = 1 / config.scale;
+
+                  return (
+                    // ⚠️ จุดที่ 1: ลบ bg-red-500, rounded-full, border ออกให้หมด 
+                    // ให้เหลือแค่ตำแหน่งและการชี้เมาส์
+                    <div 
+                      key={loc.id || index}
+                      onClick={(e) => {
+                         e.stopPropagation(); 
+                         setSelectedLocation(loc); 
+                      }}
+                      className={`absolute cursor-pointer z-10 flex justify-center group ${hoveredLocName === loc.name ? 'z-[100]' : 'hover:z-[100]'}`}
+                      style={{
+                        left: `${pos.x}%`,
+                        top: `${pos.y}%`,
+                        transform: `translate(-50%, -50%) scale(${inverseScale})` 
+                      }}
+                    >
+                       {/* ⚠️ จุดที่ 2: ใส่ไอคอน 📍 ลงไปตรงนี้แทน และตั้งให้ขยายใหญ่ขึ้นตอนเอาเมาส์ชี้ */}
+                       <span className={`text-2xl drop-shadow-md transition-transform duration-200 origin-bottom 
+                         ${hoveredLocName === loc.name ? 'scale-125 -translate-y-2' : 'group-hover:scale-125'}`}>
+                         📍
+                       </span>
+
+                       {/* ป๊อปอัปชื่อสถานที่ตอนเอาเมาส์ชี้หมุด (เหมือนเดิม) */}
+                       <div className={`absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-gray-900/90 backdrop-blur text-white text-sm px-2.5 py-1.5 rounded-lg shadow-xl whitespace-nowrap pointer-events-none transition-opacity font-medium
+                         ${hoveredLocName === loc.name ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                         {loc.name}
+                       </div>
+                    </div>
+                  );
+              })}
           </div>
         </div>
         {activeProvince && (
@@ -193,44 +377,116 @@ export default function InteractiveMap({ allLocations, allNetworks }) {
 
       {/* --- ส่วนรายชื่อและเครือข่าย (ฝั่งขวา) --- */}
       <div className="w-full lg:w-1/2 bg-white p-7 rounded-2xl shadow-sm border border-gray-100 overflow-y-auto max-h-[850px]">
-        {/* Header และตัวกรองจังหวัด */}
-        <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
-          <h1 className="text-3xl font-extrabold text-gray-900">
+   
+
+                  {/* 👇 ส่วนแสดงข้อมูลเครือข่ายระดับจังหวัด (เปลี่ยนเป็น Accordion ยุบรวม) 👇 */}
+          {activeProvince && allNetworks && (
+            <div className="mb-8">
+              
+              
+              {(() => {
+                // ดึงข้อมูลเครือข่ายทั้งหมดที่อยู่ในจังหวัดที่กำลังเลือก
+                const currentProvinceNetworks = allNetworks.filter(net => net.province === activeProvince);
+                
+                if (currentProvinceNetworks.length === 0) return <div className="text-sm text-gray-500">ไม่มีข้อมูลเครือข่ายในพื้นที่นี้</div>;
+
+                return (
+                  <div className={`bg-blue-50 rounded-xl border transition-all duration-300 overflow-hidden ${isProvinceInfoExpanded ? 'border-blue-300 shadow-md ring-1 ring-blue-300' : 'border-blue-100 shadow-sm hover:border-blue-300'}`}>
+                    
+                    {/* 📌 ส่วนหัว Accordion (คลิกเพื่อกาง/หด) */}
+                    <div 
+                      onClick={() => setIsProvinceInfoExpanded(!isProvinceInfoExpanded)}
+                      className="p-4 cursor-pointer flex justify-between items-center group"
+                    >
+                      <div className="flex items-center gap-3">
+                       
+                        <h1 className="text-xl font-extrabold text-gray-900">
             ระบบเครือข่ายอาหาร{activeProvince ? ` จ.${getProvinceLabel(activeProvince)}` : 'ปลอดภัย'}
           </h1>
-          {activeProvince && (
-            <button 
-              onClick={() => setActiveProvince(null)}
-              className="text-sm font-semibold text-blue-600 hover:text-blue-800 transition"
-            >
-              ดูทุกจังหวัด →
-            </button>
-          )}
-        </div>
+                      </div>
+                      
+                      {/* ไอคอนลูกศร */}
+                      <svg 
+                        className={`w-5 h-5 text-blue-500 transition-transform duration-300 ${isProvinceInfoExpanded ? 'rotate-180' : ''}`} 
+                        fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
 
-        {/* ส่วนแสดงข้อมูลเครือข่ายระดับจังหวัด */}
-        {activeProvince && activeProvinceNetworks?.length > 0 && (
-          <div className="mb-8 border-b-2 border-dashed border-gray-100 pb-6">
-            <h3 className="text-xl font-bold text-gray-800 mb-4">เครือข่ายในพื้นที่</h3>
-            <div className="space-y-4">
-              {activeProvinceNetworks.map((net, index) => (
-                <a 
-                  key={net.slug || `net-${index}`} 
-                  className="w-full flex items-center gap-3 p-4 bg-blue-50 border border-blue-100 rounded-xl hover:bg-blue-100 transition shadow-sm text-left cursor-pointer"
-                  onClick={() => setSelectedNetwork(net)} 
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                  </svg>
-                  <div>
-                    <span className="block text-lg font-bold text-blue-800">{net.name}</span>
+                    {/* 📌 ส่วนเนื้อหา (รวมทุกเครือข่ายมาต่อกัน) */}
+                    <div className={`grid transition-all duration-300 ease-in-out ${isProvinceInfoExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                      <div className="overflow-hidden">
+                        <div className="p-4 pt-0 border-t border-blue-100 text-sm text-gray-700 bg-white/60">
+                          
+                          {/* วนลูปนำข้อมูลเครือข่ายทั้งหมดมาเรียงต่อกัน */}
+                          {currentProvinceNetworks.map((net, idx) => (
+                            <div key={idx} className={idx > 0 ? "pt-8 mt-6 border-t-2 border-gray-100" : "pt-4 pb-2"}>
+                              
+                              {/* 1. ภาพหน้าปก (ถ้ามี) */}
+                              {net.imageUrl && (
+                                <div className="w-full h-48 md:h-64 overflow-hidden rounded-xl mb-6 shadow-sm">
+                                  <img src={net.imageUrl} alt={net.name} className="w-full h-full object-cover" />
+                                </div>
+                              )}
+
+                              {/* 2. ชื่อเครือข่ายและ Tag */}
+                              <h5 className="text-2xl font-extrabold text-blue-900 mb-3">{net.name}</h5>
+                              <div className="flex flex-wrap items-center gap-2 mb-6">
+                                <span className="bg-blue-100 text-blue-800 px-3 py-1.5 rounded-full text-xs font-bold">
+                                  เครือข่ายระดับจังหวัด
+                                </span>
+                                <span className="text-gray-400">•</span>
+                                {/* ดึงชื่อจังหวัดมาแสดงแบบไดนามิก แทนการพิมพ์ "ชัยนาท" ตรงๆ */}
+                                <span className="text-gray-600 font-medium text-sm">
+                                  {getProvinceLabel(activeProvince)} 
+                                </span>
+                              </div>
+
+                              {/* 3. เนื้อหาข้อมูล/องค์ความรู้ (ที่แปลงมาจาก Markdown) */}
+                              {net.contentHTML ? (
+                                <div 
+                                  // ใช้คลาส prose ของ Tailwind เพื่อให้ HTML ที่ render ออกมาสวยงาม
+                                  className="prose prose-sm md:prose-base prose-blue max-w-none text-gray-700 leading-relaxed"
+                                  dangerouslySetInnerHTML={{ __html: net.contentHTML }} 
+                                />
+                              ) : (
+                                <p className="text-gray-400 italic">ไม่มีข้อมูลเพิ่มเติม</p>
+                              )}
+
+                              {/* 4. ส่วนข้อมูลยุทธศาสตร์ (คอมเมนต์ไว้เหมือนในต้นฉบับ เผื่ออนาคตอยากเปิดใช้) */}
+                              {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+                                {[
+                                  { title: "ภาคียุทธศาสตร์นโยบายระดับท้องถิ่น", content: net.strategicPartners },
+                                  { title: "นโยบายระดับท้องถิ่น", content: net.localPolicies },
+                                  { title: "ภาคียุทธศาสตร์นโยบายระดับชาติ", content: net.nationalPartnerPolicies },
+                                  { title: "ภาคียุทธศาสตร์ระดับชาติ", content: net.nationalPartners },
+                                ].map((section, index) => (
+                                  section.content && (
+                                    <div key={index} className="bg-gray-50 p-5 rounded-xl border border-gray-200">
+                                      <h4 className="text-md font-bold text-gray-800 mb-2 border-b border-gray-200 pb-2">
+                                        {section.title}
+                                      </h4>
+                                      <p className="text-gray-700 text-sm whitespace-pre-line leading-relaxed">
+                                        {section.content}
+                                      </p>
+                                    </div>
+                                  )
+                                ))}
+                              </div> */}
+
+                            </div>
+                          ))}
+
+                        </div>
+                      </div>
+                    </div>
+                    
                   </div>
-                </a>
-              ))}
-              
+                );
+              })()}
             </div>
-          </div>
-        )}
+          )}
 
         {/* ส่วนแสดงรายชื่อกลุ่ม/สถานที่ */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
@@ -285,6 +541,17 @@ export default function InteractiveMap({ allLocations, allNetworks }) {
         <div className="space-y-3">
           {filteredLocations?.length > 0 ? (
             filteredLocations.map((loc, index) => (
+              <div
+                    key={index}
+                    // 👇 1. เมื่อเอาเมาส์ชี้การ์ด ให้ส่งชื่อไปบอกหมุดบนแผนที่
+                    onMouseEnter={() => setHoveredLocName(loc.name)}
+                    onMouseLeave={() => setHoveredLocName(null)}
+                    
+                    // 👇 2. เมื่อคลิกที่การ์ด ก็เปิด Modal ได้เหมือนกัน
+                    onClick={() => setSelectedLocation(loc)}
+                    
+                    
+                  >
               <button 
                 key={loc.slug || `loc-${index}`} 
                 className="w-full p-4 bg-white border border-gray-100 rounded-xl hover:border-gray-200 hover:bg-gray-50 transition shadow-sm text-left flex justify-between items-center cursor-pointer"
@@ -295,6 +562,7 @@ export default function InteractiveMap({ allLocations, allNetworks }) {
                   {!activeProvince && <span className="block text-xs text-gray-500">{getProvinceLabel(loc.province)}</span>}
                 </div>
               </button>
+              </div>
             ))
           ) : (
             <p className="text-gray-400 text-sm italic">ไม่มีสถานที่ข้อมูลสถานที่ในจังหวัดนี้</p>
