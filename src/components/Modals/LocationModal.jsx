@@ -79,7 +79,7 @@ export default function LocationModal({ locationData, onClose, onNetworkClick })
       className="fixed inset-0 bg-black/50 z-[1000] flex items-center justify-center p-4 backdrop-blur-sm"
       onClick={handleBackdropClick}
     >
-      <div className="bg-white rounded-2xl z-[1500] w-full max-w-6xl h-full overflow-y-auto shadow-xl relative">
+      <div className="bg-white rounded-2xl z-[1500] w-full max-w-6xl h-full overflow-y-auto hide-scrollbar shadow-xl relative">
         {/* ปุ่มปิด */}
         <button 
           onClick={onClose}
@@ -106,7 +106,7 @@ export default function LocationModal({ locationData, onClose, onNetworkClick })
         <div className="p-7">
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 mb-2">
             <div>
-              <h2 className="text-3xl font-extrabold text-gray-900 leading-tight mb-2">
+              <h2 className="text-xl font-extrabold text-gray-900 leading-tight mb-2">
                 {locationData.name}
               </h2>
               <div className="flex flex-wrap items-center gap-2">
@@ -149,7 +149,7 @@ export default function LocationModal({ locationData, onClose, onNetworkClick })
           {/* ข้อมูลทั่วไป (Markdown) */}
           {locationData.contentHTML && (
             <div className="mb-8 border-b border-gray-100 pb-8 prose prose-blue prose-sm max-w-none">
-              <h3 className="text-xl font-bold text-gray-800 mb-3">ข้อมูลการดำเนินงาน</h3>
+              <h3 className="text-lg font-bold text-gray-800 mb-3">ข้อมูลการดำเนินงาน</h3>
               <div dangerouslySetInnerHTML={{ __html: locationData.contentHTML }} />
             </div>
           )}

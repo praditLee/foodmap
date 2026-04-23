@@ -83,21 +83,38 @@ const networkData = await Promise.all(
     };
   }),
 );
+
+const menuItems = [
+  { label: "หน้าหลัก", href: "https://landactionthai.org" },
+  { label: "เกี่ยวกับเรา", href: "https://landactionthai.org/about-us" },
+  { label: "วิจัย", href: "https://landactionthai.org/research" },
+  { label: "นาเช่า", href: "#" },
+  { label: "สินค้า", href: "#" },
+  { label: "English", href: "#", isUppercase: true },
+  { label: "E-Book", href: "#", isUppercase: true },
+  { label: "สื่อรณรงค์", href: "#" },
+  { label: "สิทธิที่ดิน", href: "#" },
+  { label: "หนี้สินชาวนา", href: "#" },
+  { label: "ค้นหา", href: "#" },
+  { label: "Mapping", href: "#", isActive: true, isUppercase: true },
+];
 ---
 
 <html lang="th">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Food Map 4 จังหวัด</title>
   </head>
   <body class="bg-gray-100 min-h-screen flex flex-col">
     {/* ================= HEADER ================= */}
     <header
-      class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50"
+      class="bg-white border-b border-gray-200 shadow-sm z-50 sticky top-0"
     >
       <div
-        class="max-w-7xl mx-auto px-4 flex flex-col lg:flex-row justify-between items-center py-3 gap-4"
+        class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center"
       >
+        {/* โลโก้ */}
         <a
           href="https://landactionthai.org"
           class="flex items-center gap-3 hover:opacity-80 transition"
@@ -106,53 +123,66 @@ const networkData = await Promise.all(
           <img
             src="https://landactionthai.org/templates/yootheme/cache/Screenshot_2563-01-06_at_192605-a2150f35.png"
             alt="Local Act Logo"
-            class="h-20 object-contain"
+            class="h-16 lg:h-20 object-contain"
             onError={(e) => (e.target.style.display = "none")}
           />
         </a>
 
-        {/* เมนูนำทาง */}
-        <nav
-          class="flex flex-wrap justify-between gap-x-5 gap-y-2 text-[13px] font-bold text-gray-700"
+        {/* ปุ่ม Hamburger (แสดงเฉพาะจอมือถือ) */}
+        <button
+          id="mobile-menu-btn"
+          class="lg:hidden block text-xs px-2 py-1 border border-gray-300 rounded-md text-gray-700 hover:text-green-700 focus:outline-none"
         >
-          <a
-            href="https://landactionthai.org"
-            class="hover:text-green-700 transition">หน้าหลัก</a
+          เมนู
+          <!-- <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-8 w-8"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
           >
-          <a
-            href="https://landactionthai.org/about-us"
-            class="hover:text-green-700 transition">เกี่ยวกับเรา</a
-          >
-          <a
-            href="https://landactionthai.org/research"
-            class="hover:text-green-700 transition">วิจัย</a
-          >
-          <a href="#" class="hover:text-green-700 transition">นาเช่า</a>
-          <a href="#" class="hover:text-green-700 transition">สินค้า</a>
-          <a href="#" class="hover:text-green-700 transition uppercase"
-            >English</a
-          >
-          <a href="#" class="hover:text-green-700 transition uppercase"
-            >E-Book</a
-          >
-          <a href="#" class="hover:text-green-700 transition">สื่อรณรงค์</a>
-          <a href="#" class="hover:text-green-700 transition">สิทธิที่ดิน</a>
-          <a href="#" class="hover:text-green-700 transition">หนี้สินชาวนา</a>
-          <a href="#" class="hover:text-green-700 transition">ค้นหา</a>
-          {/* หน้าปัจจุบัน ทำสีเด่นๆ */}
-          <span
-            class="text-red-800 uppercase cursor-default border-b-2 border-red-800 pb-0.5"
-            >Mapping</span
-          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 6h16M4 12h16M4 18h16"></path>
+          </svg> -->
+        </button>
+
+        {/* เมนูนำทาง (วนลูปจาก Array) */}
+        <nav
+          id="mobile-menu"
+          class="hidden w-full lg:flex lg:w-auto flex-col lg:flex-row justify-between items-center gap-x-5 gap-y-4 text-xs font-bold text-gray-700 mt-4 lg:mt-0 pb-4 lg:pb-0"
+        >
+          {
+            menuItems.map((item) =>
+              item.isActive ? (
+                <span
+                  class={`text-red-800 cursor-default border-b-2 border-red-800 pb-0.5 inline-block ${item.isUppercase ? "uppercase" : ""}`}
+                >
+                  {item.label}
+                </span>
+              ) : (
+                <a
+                  href={item.href}
+                  class={`hover:text-green-700 transition inline-block ${item.isUppercase ? "uppercase" : ""}`}
+                >
+                  {item.label}
+                </a>
+              ),
+            )
+          }
         </nav>
       </div>
     </header>
-    <main class="flex-grow w-full max-w-7xl mx-auto py-8 px-4">
-      <div class="px-4">
-        <h1 className="text-4xl font-bold text-center mb-2 text-gray-800">
+    <main class="flex-grow w-full max-w-7xl mx-auto px-2 md:px-4 lg:px-6 py-8">
+      <div class="mb-6 md:mb-10">
+        <h1
+          className="text-2xl md:text-3xl lg:text-4xl text-center font-bold mb-2 text-gray-800"
+        >
           แผนที่เครือข่ายอาหารปลอดภัย
         </h1>
-        <p className="text-center text-gray-500 mb-10">
+        <p className="text-xs text-gray-500 text-center mb-6 md:mb-10">
           คลิกที่จังหวัดเพื่อดูรายชื่อสถานที่
         </p>
       </div>
@@ -252,3 +282,18 @@ const networkData = await Promise.all(
     </footer>
   </body>
 </html>
+<script>
+  // รอให้หน้าเว็บโหลดเสร็จก่อนค่อยผูก Event
+  document.addEventListener("DOMContentLoaded", () => {
+    const btn = document.getElementById("mobile-menu-btn");
+    const menu = document.getElementById("mobile-menu");
+
+    if (btn && menu) {
+      btn.addEventListener("click", () => {
+        // สลับคลาส hidden และ flex เพื่อเปิด/ปิดเมนู
+        menu.classList.toggle("hidden");
+        menu.classList.toggle("flex");
+      });
+    }
+  });
+</script>

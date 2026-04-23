@@ -103,28 +103,28 @@ export default function InteractiveMap({ allLocations, allNetworks }) {
   const zoomConfig = {
     // 📌 ชัยนาท (ค่อนข้างกลม ใช้ 1-2 จุดก็พอ)
     'chainat': { 
-      scale:  2.8, x: -8, y: 30 , 
-      anchors: [{ x: 60, y: 22 }], 
-      spreadX: 2, spreadY: 2 
+      scale:  2.8, x: -8, y: 32 , 
+      anchors: [{ x: 60, y: 18 }], 
+      spreadX: 2, spreadY: 1.5 
     }, 
     // 📌 สุพรรณบุรี (ยาวเรียว เราจะกำหนดจุดปลอดภัย 3 จุด เรียงจากบนลงล่าง)
     'suphanburi': { 
-      scale: 2.0, x: 0, y: 3, 
+      scale: 1.8, x: 0, y: 5, 
       anchors: [
-        { x: 42, y: 30 }, // โซนบน (อ.ด่านช้าง/เดิมบางฯ)
-        { x: 60, y: 45 }, // โซนกลาง (อ.เมือง/สามชุก)
-        { x: 60, y: 55 }  // โซนล่าง (อ.สองพี่น้อง/อู่ทอง)
+        { x: 42, y: 28 }, // โซนบน (อ.ด่านช้าง/เดิมบางฯ)
+        { x: 60, y: 40 }, // โซนกลาง (อ.เมือง/สามชุก)
+        { x: 60, y: 50 }  // โซนล่าง (อ.สองพี่น้อง/อู่ทอง)
       ], 
       spreadX: 1.5, spreadY: 1.5 // ⚠️ สำคัญ: ลดค่า spread ลง เพื่อให้กระจุกอยู่ใกล้ๆ จุดย่อย ไม่บานออกไปไกล
     },
     // 📌 นครปฐม และ นนทบุรี
     'nakhonpathom': { 
-      scale: 2.8, x: -12, y: -28, 
-      anchors: [{ x: 65, y: 73 }], // ตัวอย่างใส่ 2 จุด
+      scale: 2.8, x: -12, y: -24, 
+      anchors: [{ x: 65, y: 70 }], // ตัวอย่างใส่ 2 จุด
       spreadX: 2, spreadY: 2 
     },
     'nonthaburi': { 
-      scale: 4.2, x: -28, y: -25, 
+      scale: 4.2, x: -28, y: -21, 
       anchors: [{ x: 70, y: 80 }], 
       spreadX: 2, spreadY: 3 
     },
@@ -154,24 +154,24 @@ export default function InteractiveMap({ allLocations, allNetworks }) {
   };
 
   return (
-    <div className="foodmap-container flex flex-col lg:flex-row gap-6 p-6">
+    <div className="foodmap-container flex flex-col lg:flex-row gap-3">
       
       {/* --- ส่วนที่ 1: แผนที่ SVG (ฝั่งซ้าย) --- */}
-      <div className="w-full lg:w-1/2 p-4 bg-white  flex items-start justify-center relative bg-blue-50 overflow-hidden">
+      <div className="w-full h-full lg:w-1/2 p-0 flex items-start justify-center relative bg-blue-50 overflow-hidden">
         
         {/* 👇 ป้ายแจ้งจำนวนสถานที่ (จะโผล่มาเฉพาะตอนคลิกเลือกจังหวัดแล้ว) 👇 */}
           {activeProvince && (
-            <div className="absolute z-10 top-6 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-sm px-6 py-2.5 rounded-full shadow-lg border border-gray-100 flex items-center gap-3 animate-[fadeIn_0.3s_ease-out]">
-              <span className="font-bold text-gray-800 text-lg">
+            <div className="absolute z-10 top-3 left-2 md:left-1/2 md:-translate-x-1/2 bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg border border-gray-100 flex items-center gap-3 animate-[fadeIn_0.3s_ease-out]">
+              <span className="font-bold text-gray-800 text-xs md:text-md">
                 📍 {getProvinceLabel(activeProvince)} {/* เปลี่ยนเป็นฟังก์ชันดึงชื่อจังหวัดของคุณ */}
               </span>
-              <span className="bg-blue-100 text-blue-800 text-sm font-extrabold px-2.5 py-0.5 rounded-full">
+              <span className="bg-blue-100 text-blue-800 text-xs md:text-md font-extrabold px-2.5 py-0.5 rounded-full">
                 {getProvinceLocationCount(activeProvince)} แห่ง
               </span>
             </div>
           )}
-{/* 👇 กรอบหน้าต่างครอบแผนที่ (บังคับให้ส่วนที่ซูมล้นออกไปถูกซ่อนไว้) 👇 */}
-          <div className="w-full aspect-square bg-blue-50/50 rounded-2xl overflow-hidden border border-gray-100 relative p-4"
+          {/* 👇 กรอบหน้าต่างครอบแผนที่ (บังคับให้ส่วนที่ซูมล้นออกไปถูกซ่อนไว้) 👇 */}
+          <div className="w-full h-auto aspect-square bg-blue-50/50 rounded-2xl overflow-hidden border border-gray-100 relative"
           // ตรวจจับการขยับของเมาส์เพื่อขยับ Tooltip
             onMouseMove={(e) => {
               // ใช้พิกัดเมาส์บนหน้าจอตรงๆ เลย
@@ -186,7 +186,7 @@ export default function InteractiveMap({ allLocations, allNetworks }) {
             {/* 👇 กล่อง Tooltip ที่จะวิ่งตามเมาส์ (โผล่มาตอนชี้จังหวัดที่ไม่ได้คลิก) 👇 */}
             {hoveredProvince && !activeProvince && (
               <div 
-                className="fixed z-[9999] pointer-events-none bg-gray-900/90 backdrop-blur text-white px-4 py-2 rounded-xl shadow-xl text-sm font-semibold transition-opacity duration-150 whitespace-nowrap flex flex-col gap-1"
+                className="fixed z-[9999] pointer-events-none bg-gray-900/90 backdrop-blur text-white px-2 py-1 rounded-xl shadow-xl text-sm font-semibold transition-opacity duration-150 whitespace-nowrap flex flex-col gap-1"
                 style={{
                   left: `${mousePos.x + 15}px`, 
                   top: `${mousePos.y + 15}px`,
@@ -200,7 +200,7 @@ export default function InteractiveMap({ allLocations, allNetworks }) {
             )}
             {/* 👇 ตัวแอนิเมชันซูมแผนที่ 👇 */}
             <div 
-              className="w-full h-full transition-transform duration-700 ease-in-out flex items-center justify-center relative"
+              className="w-full h-auto transition-transform duration-700 ease-in-out flex items-center justify-center relative"
               style={{
                 transform: activeProvince && zoomConfig[activeProvince]
                   ? `scale(${zoomConfig[activeProvince].scale}) translate(${zoomConfig[activeProvince].x}%, ${zoomConfig[activeProvince].y}%)`
@@ -208,7 +208,7 @@ export default function InteractiveMap({ allLocations, allNetworks }) {
                 transformOrigin: 'center center'
               }}
             >
-            <svg viewBox="90 350 150 140" className="w-full bg-white/50">
+            <svg viewBox="90 350 150 150" className="w-full bg-white/50">
               {/* กรุงเทพฯ */}
               <path id="bangkok" d="m 217.28844,457.46255 0.7,-0.33 2,0.66 0.51,-0.71 0.92,0.42 0.02,0.76 0.97,0.03 0.04,0.41 3.31,0.12 1.17,0.83 1.47,0.08 6.19,-1.38 6.29,-0.59 0,0 -0.52,5.83 -0.26,0.81 -0.69,-0.1 3.08,2.5 -1.91,1.66 -3.67,6.17 0.39,0.25 0,0 -0.12,0.53 -4.77,-1.85 -5.27,-0.12 0.13,1.57 -0.9,2.71 -2.11,-0.72 -0.07,-0.64 -0.79,0.33 -0.52,1.32 -4.51,-1.14 0.54,-1.65 -2.15,-0.97 -0.62,2.33 -0.8,0.2 -0.91,-0.7 -0.28,0.43 -0.19,3.13 0.4,1.56 -0.76,0.26 -1.92,-0.44 -0.75,0.99 -0.34,-0.82 -0.7,0.04 -0.68,3.38 0.54,3.67 0,0 -3.01,0.59 0,0 -0.23,-1.22 1.03,-2.14 -0.14,-1.23 -1.56,0.21 -0.69,-2.14 -0.54,0.19 0.35,-0.35 -0.76,-2.66 -0.99,-0.74 -1.08,-0.06 -0.55,-6.38 0,0 -0.14,-4.58 -0.67,-1.54 0,0 0.72,1.26 8.74,0.44 0.75,0.59 2.05,-0.77 1.01,-0.87 -0.58,-0.31 0.13,-0.52 2.35,-1.71 z" className="fill-gray-200 stroke-white stroke-[0.5]" />
               {/* ปทุมธานี */}
@@ -367,7 +367,7 @@ export default function InteractiveMap({ allLocations, allNetworks }) {
           // <div className="mt-4 text-center absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
            <button 
              onClick={() => setActiveProvince(null)}
-             className="absolute top-4 right-4 bg-white px-3 py-1 rounded-full shadow text-sm hover:bg-gray-100"
+             className="absolute top-4 right-3 bg-white px-3 py-1 rounded-full shadow text-xs md:text-sm hover:bg-gray-100"
            >
              แสดงทั้งหมด
            </button>
@@ -376,14 +376,13 @@ export default function InteractiveMap({ allLocations, allNetworks }) {
       </div>
 
       {/* --- ส่วนรายชื่อและเครือข่าย (ฝั่งขวา) --- */}
-      <div className="w-full lg:w-1/2 bg-white p-7 rounded-2xl shadow-sm border border-gray-100 overflow-y-auto max-h-[850px]">
+      <div className="w-full lg:w-1/2 bg-white p-2 md:p-4 rounded-2xl shadow-sm border border-gray-100 overflow-y-auto max-h-[850px] hover-scrollbar scrollbar-thin scrollbar-thumb-gray-300">
    
 
-                  {/* 👇 ส่วนแสดงข้อมูลเครือข่ายระดับจังหวัด (เปลี่ยนเป็น Accordion ยุบรวม) 👇 */}
+          {/* 👇 ส่วนแสดงข้อมูลเครือข่ายระดับจังหวัด (เปลี่ยนเป็น Accordion ยุบรวม) 👇 */}
           {activeProvince && allNetworks && (
             <div className="mb-8">
-              
-              
+
               {(() => {
                 // ดึงข้อมูลเครือข่ายทั้งหมดที่อยู่ในจังหวัดที่กำลังเลือก
                 const currentProvinceNetworks = allNetworks.filter(net => net.province === activeProvince);
@@ -396,11 +395,11 @@ export default function InteractiveMap({ allLocations, allNetworks }) {
                     {/* 📌 ส่วนหัว Accordion (คลิกเพื่อกาง/หด) */}
                     <div 
                       onClick={() => setIsProvinceInfoExpanded(!isProvinceInfoExpanded)}
-                      className="p-4 cursor-pointer flex justify-between items-center group"
+                      className="p-3 cursor-pointer flex justify-between items-center group"
                     >
                       <div className="flex items-center gap-3">
                        
-                        <h1 className="text-xl font-extrabold text-gray-900">
+                        <h1 className="text-sm md:text-md lg:text-xl font-extrabold text-gray-900">
             ระบบเครือข่ายอาหาร{activeProvince ? ` จ.${getProvinceLabel(activeProvince)}` : 'ปลอดภัย'}
           </h1>
                       </div>
@@ -431,17 +430,17 @@ export default function InteractiveMap({ allLocations, allNetworks }) {
                               )}
 
                               {/* 2. ชื่อเครือข่ายและ Tag */}
-                              <h5 className="text-2xl font-extrabold text-blue-900 mb-3">{net.name}</h5>
+                              {/* <h5 className="text-2xl font-extrabold text-blue-900 mb-3">{net.name}</h5>
                               <div className="flex flex-wrap items-center gap-2 mb-6">
                                 <span className="bg-blue-100 text-blue-800 px-3 py-1.5 rounded-full text-xs font-bold">
                                   เครือข่ายระดับจังหวัด
                                 </span>
                                 <span className="text-gray-400">•</span>
-                                {/* ดึงชื่อจังหวัดมาแสดงแบบไดนามิก แทนการพิมพ์ "ชัยนาท" ตรงๆ */}
+                               
                                 <span className="text-gray-600 font-medium text-sm">
                                   {getProvinceLabel(activeProvince)} 
                                 </span>
-                              </div>
+                              </div> */}
 
                               {/* 3. เนื้อหาข้อมูล/องค์ความรู้ (ที่แปลงมาจาก Markdown) */}
                               {net.contentHTML ? (
@@ -455,7 +454,7 @@ export default function InteractiveMap({ allLocations, allNetworks }) {
                               )}
 
                               {/* 4. ส่วนข้อมูลยุทธศาสตร์ (คอมเมนต์ไว้เหมือนในต้นฉบับ เผื่ออนาคตอยากเปิดใช้) */}
-                              {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
                                 {[
                                   { title: "ภาคียุทธศาสตร์นโยบายระดับท้องถิ่น", content: net.strategicPartners },
                                   { title: "นโยบายระดับท้องถิ่น", content: net.localPolicies },
@@ -473,7 +472,7 @@ export default function InteractiveMap({ allLocations, allNetworks }) {
                                     </div>
                                   )
                                 ))}
-                              </div> */}
+                              </div>
 
                             </div>
                           ))}
@@ -491,49 +490,49 @@ export default function InteractiveMap({ allLocations, allNetworks }) {
         {/* ส่วนแสดงรายชื่อกลุ่ม/สถานที่ */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
           <div className="flex items-center gap-3">
-            <h3 className="text-xl font-bold text-gray-800">กลุ่มขับเคลื่อน</h3>
+            <h3 className="text-sm md:text-xl font-bold text-gray-800">กลุ่มขับเคลื่อน</h3>
             
             {/* กล่องแสดงตัวเลข (Badge) */}
-            <span className="bg-blue-100 text-blue-800 text-sm font-semibold px-3 py-1 rounded-full">
+            <span className="bg-blue-100 text-blue-800 text-xs md:text-sm font-semibold px-3 py-1 rounded-full">
               {filteredLocations?.length || 0} แห่ง
             </span>
           </div>
           <input
             type="text"
-            placeholder="🔍 ค้นหาชื่อสถานที่..."
-            className="w-full sm:w-64 border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50 focus:bg-white transition"
+            placeholder="🔍  ค้นหาชื่อสถานที่..."
+            className="w-full sm:w-64 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50 focus:bg-white transition"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="flex flex-wrap gap-2 mb-4">
+        <div className="flex flex-wrap gap-1 md:gap-2 mb-4">
           <button
             onClick={() => setActiveStage(null)}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors border ${!activeStage ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
+            className={`px-2 py-1.5 md:px-3 rounded-full text-xs font-semibold transition-colors border ${!activeStage ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
           >
             ทั้งหมด
           </button>
           <button
             onClick={() => setActiveStage('upstream')}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors border ${activeStage === 'upstream' ? 'bg-teal-600 text-white border-teal-600' : 'bg-teal-50 text-teal-700 border-teal-200 hover:bg-teal-100'}`}
+            className={`px-2 py-1.5 md:px-3 rounded-full text-xs font-semibold transition-colors border ${activeStage === 'upstream' ? 'bg-teal-600 text-white border-teal-600' : 'bg-teal-50 text-teal-700 border-teal-200 hover:bg-teal-100'}`}
           >
             ต้นน้ำ
           </button>
           <button
             onClick={() => setActiveStage('midstream')}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors border ${activeStage === 'midstream' ? 'bg-amber-500 text-white border-amber-500' : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'}`}
+            className={`px-2 py-1.5 md:px-3 rounded-full text-xs font-semibold transition-colors border ${activeStage === 'midstream' ? 'bg-amber-500 text-white border-amber-500' : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'}`}
           >
             กลางน้ำ
           </button>
           <button
             onClick={() => setActiveStage('downstream')}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors border ${activeStage === 'downstream' ? 'bg-rose-500 text-white border-rose-500' : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'}`}
+            className={`px-2 py-1.5 md:px-3 rounded-full text-xs font-semibold transition-colors border ${activeStage === 'downstream' ? 'bg-rose-500 text-white border-rose-500' : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'}`}
           >
             ปลายน้ำ
           </button>
           <button
             onClick={() => setActiveStage('partner')}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors border ${activeStage === 'partner' ? 'bg-indigo-500 text-white border-indigo-500' : 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'}`}
+            className={`px-2 py-1.5 md:px-3 rounded-full text-xs font-semibold transition-colors border ${activeStage === 'partner' ? 'bg-indigo-500 text-white border-indigo-500' : 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'}`}
           >
             ภาคี
           </button>
@@ -546,20 +545,17 @@ export default function InteractiveMap({ allLocations, allNetworks }) {
                     // 👇 1. เมื่อเอาเมาส์ชี้การ์ด ให้ส่งชื่อไปบอกหมุดบนแผนที่
                     onMouseEnter={() => setHoveredLocName(loc.name)}
                     onMouseLeave={() => setHoveredLocName(null)}
-                    
                     // 👇 2. เมื่อคลิกที่การ์ด ก็เปิด Modal ได้เหมือนกัน
                     onClick={() => setSelectedLocation(loc)}
-                    
-                    
                   >
               <button 
                 key={loc.slug || `loc-${index}`} 
-                className="w-full p-4 bg-white border border-gray-100 rounded-xl hover:border-gray-200 hover:bg-gray-50 transition shadow-sm text-left flex justify-between items-center cursor-pointer"
+                className="w-full p-2 md:p-3 bg-white border border-gray-100 rounded-xl hover:border-gray-200 hover:bg-gray-50 transition shadow-sm text-left flex justify-between items-center cursor-pointer"
                 onClick={() => setSelectedLocation(loc)} 
               >
                 <div>
-                  <span className="block font-semibold text-gray-800 text-base">{loc.name}</span>
-                  {!activeProvince && <span className="block text-xs text-gray-500">{getProvinceLabel(loc.province)}</span>}
+                  <span className="block font-semibold text-gray-800 text-xs md:text-base">{loc.name}</span>
+                  {!activeProvince && <span className="block text-[8pt] md:text-xs text-gray-500">{getProvinceLabel(loc.province)}</span>}
                 </div>
               </button>
               </div>
@@ -571,10 +567,10 @@ export default function InteractiveMap({ allLocations, allNetworks }) {
       </div>
 
       {/* Rendering Modals */}
-      <NetworkModal 
+      {/* <NetworkModal 
         networkData={selectedNetwork} 
         onClose={closeModals} 
-      />
+      /> */}
 
       <LocationModal 
         locationData={selectedLocation} 

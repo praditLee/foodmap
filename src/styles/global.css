@@ -28,3 +28,44 @@
     font-family: var(--font-anuphan), sans-serif;
   }
 }
+
+
+  /* 📌 1. ตั้งค่าสำหรับ Chrome, Safari, Edge */
+  .hover-scrollbar::-webkit-scrollbar {
+    width: 6px; /* ความกว้างของ Scrollbar */
+    background-color: transparent; /* พื้นหลังโปร่งใส */
+  }
+  
+  .hover-scrollbar::-webkit-scrollbar-thumb {
+    background-color: transparent; /* ซ่อนตัวจับ Scrollbar เริ่มต้น */
+    border-radius: 8px; /* ขอบมน */
+  }
+
+  /* แสดงตัวจับ Scrollbar เมื่อเอาเมาส์ไปชี้ที่กล่อง */
+  .hover-scrollbar:hover::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1; /* สีเทาอ่อน (Tailwind slate-300) */
+  }
+
+  /* เข้มขึ้นอีกนิดถ้าเอาเมาส์ไปชี้ตรงแถบ Scrollbar พอดี */
+  .hover-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #94a3b8; /* สีเทาเข้ม (Tailwind slate-400) */
+  }
+
+  /* 📌 2. ตั้งค่าสำหรับ Firefox */
+  .hover-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+    transition: scrollbar-color 0.3s ease;
+  }
+  
+  .hover-scrollbar:hover {
+    scrollbar-color: #cbd5e1 transparent;
+  }
+.hide-scrollbar {
+    -ms-overflow-style: none;  /* สำหรับ Internet Explorer, Edge */
+    scrollbar-width: none;  /* สำหรับ Firefox */
+  }
+  
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none; /* สำหรับ Chrome, Safari, และ Opera */
+  }
