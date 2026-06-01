@@ -1,585 +1,401 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import NetworkModal from './Modals/NetworkModal';
+import React, { useState, useEffect } from 'react';
+import { APIProvider, Map, AdvancedMarker, InfoWindow, useMap, Pin } from '@vis.gl/react-google-maps';
 import LocationModal from './Modals/LocationModal';
-
+import NetworkModal from './Modals/NetworkModal';
+// 👇 1. ตัวหลัก (ตัวแม่) ทำหน้าที่ครอบ APIProvider อย่างเดียว 👇
 export default function InteractiveMap({ allLocations, allNetworks }) {
-  const [activeProvince, setActiveProvince] = useState(null);
-  const [selectedLocation, setSelectedLocation] = useState(null);
-  const [selectedNetwork, setSelectedNetwork] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [activeStage, setActiveStage] = useState(null);
-  // 👇 1. เพิ่ม State สำหรับจับตำแหน่งเมาส์และจังหวัดที่เอาเมาส์ชี้ 👇
-  const [hoveredProvince, setHoveredProvince] = useState(null);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-    // เอาไว้จำว่าผู้ใช้กำลังเอาเมาส์ชี้สถานที่ไหนอยู่ (เพื่อทำแอนิเมชันเชื่อม 2 ฝั่ง)
-  const [hoveredLocName, setHoveredLocName] = useState(null);
-  // 👇 2. ฟังก์ชันเช็คว่าจังหวัดนี้มีข้อมูลตรงกับ "ตัวกรอง" ที่กดอยู่ไหม (เพื่อทำสีทึบ/สีจาง)
-  const hasActiveLocations = (provinceSlug) => {
-    // ถ้าไม่ได้เลือกตัวกรองห่วงโซ่ และไม่ได้พิมพ์ค้นหา ให้ถือว่ามีข้อมูลทั้งหมด (สว่างทุกจังหวัด)
-    if (!activeStage && searchTerm.trim() === '') return true;
-    
-    // เช็คว่าในรายชื่อที่ถูกกรองแล้ว (ด้านขวา) มีจังหวัดนี้หลงเหลืออยู่ไหม
-    return filteredLocations.some(loc => loc.province === provinceSlug);
+  return (
+    <APIProvider apiKey="AIzaSyBhokyQyee-LgnTpq17EkiYHmevY252S9E"
+    language="th"  // 👈 บังคับให้เมนู ป้ายชื่อสถานที่ และชื่อถนนเป็นภาษาไทย
+      region="TH"    // 👈 ตั้งค่าพื้นที่อ้างอิงเป็นประเทศไทย
+    >
+      {/* ส่งข้อมูลต่อไปให้ตัวลูกทำงาน */}
+      <MapContent allLocations={allLocations} allNetworks={allNetworks} />
+    </APIProvider>
+  );
+}
+
+// 👇 2. ตัวเนื้อหา (ตัวลูก) ทำหน้าที่คุมแผนที่และรายชื่อฝั่งขวา 👇
+function MapContent({ allLocations, allNetworks }) {
+  const [selectedPlace, setSelectedPlace] = useState(null);
+  const [modalLocation, setModalLocation] = useState(null);
+  // 🔥 State สำหรับระบบ Filter
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeStage, setActiveStage] = useState('all'); // all, upstream, midstream, downstream, partner
+  const [activeProvince, setActiveProvince] = useState('all'); // all, chainat, suphanburi, nakhonpathom, nonthaburi
+  // 🔥 เปิดใช้งานจอยควบคุมแผนที่ด้วยคำสั่งนี้
+  const map = useMap();
+  const defaultCenter = { lat: 14.5, lng: 100.1 };
+  // สร้าง State เก็บค่า Zoom (ตั้งค่าเริ่มต้นไว้ที่ 8)
+  const [currentZoom, setCurrentZoom] = useState(8);
+  const [mobileView, setMobileView] = useState('map');
+  
+  // State สำหรับควบคุม Toast และ Modal เครือข่าย
+  const [activeProvinceSlug, setActiveProvinceSlug] = useState(null); // เก็บค่า slug เช่น 'chainat'
+  const [showNetworkModal, setShowNetworkModal] = useState(false); // ควบคุมการเปิด Modal เต็มจอ
+
+  // ตัวแปลภาษาไทยสำหรับจังหวัดในลิสต์ฝั่งขวา
+  const provinceNames = {
+    'chainat': 'ชัยนาท',
+    'suphanburi': 'สุพรรณบุรี',
+    'nakhonpathom': 'นครปฐม',
+    'nonthaburi': 'นนทบุรี'
   };
-    // เอาไว้จำสถานะการเปิด/ปิด Accordion ของข้อมูลเครือข่ายระดับจังหวัด
-  const [isProvinceInfoExpanded, setIsProvinceInfoExpanded] = useState(false);
+
+  // ฟังก์ชันช่วยเหลือสำหรับเรียกชื่อไทย
+  const getProvinceThai = (slug) => {
+    if (!slug) return "ไม่ระบุจังหวัด";
+    return provinceNames[slug.toLowerCase()] || slug;
+  };
+
+  // 🔄 useEffect ตัวที่ 1: จัดการคำนวณ Zoom ตามขนาดหน้าจอมือถือ/คอม (ทำงานตอนโหลดครั้งแรก)
   useEffect(() => {
-    // เช็คว่าถ้ามีการเปิด Modal สถานที่ และมีค่า slug
-    if (selectedLocation && selectedLocation.slug) {
-      window.history.pushState(null, '', `?loc=${selectedLocation.slug}`);
-    } 
-    // เผื่อไว้สำหรับเครือข่ายด้วยเลย
-    else if (selectedNetwork && selectedNetwork.slug) {
-      window.history.pushState(null, '', `?net=${selectedNetwork.slug}`);
-    } 
-    // ถ้าไม่มีอะไรถูกเลือกเลย (ปิด Modal หมด) ให้เคลียร์ URL กลับเป็นหน้าปกติ
-    else {
-      window.history.pushState(null, '', window.location.pathname);
-    }
-  }, [selectedLocation, selectedNetwork]);
-
-  // ฟังก์ชันสุ่มพิกัดกระจายตัวรอบๆ จุด Anchor
-  // ใช้ index เป็นตัวตั้งต้น เพื่อให้ตำแหน่งของแต่ละที่คงที่เสมอ
-  const getScatteredPosition = (anchorX, anchorY, index, spreadX = 4, spreadY = 4) => {
-    // รัศมีการกระจาย (ยิ่งเยอะ หมุดยิ่งกระจายกว้าง) ปรับเลข 8 เป็นเลขอื่นได้ครับ
-    const radius = 8; 
-    
-    // คำนวณมุมและการกระจายแบบสุ่มจาก index
-    const angle = index * 137.5; // รหัสลับองศาทองคำ (Golden Angle) ทำให้กระจายสวย
-    const distance = Math.sqrt(index + 1); // ใช้ Square Root จะทำให้เกาะกลุ่มกันสวยกว่า
-    
-    // เอา spreadX, spreadY มาคูณ เพื่อให้วงรีบีบตามรูปทรงจังหวัด
-    const offsetX = Math.sin(angle) * distance * spreadX;
-    const offsetY = Math.cos(angle) * distance * spreadY;
-
-    return {
-      x: anchorX + offsetX,
-      y: anchorY + offsetY
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setCurrentZoom(8); // หน้าจอมือถือ ซูมออกกว้างหน่อยให้เห็นครบ
+      } else {
+        setCurrentZoom(9); // หน้าจอคอมพิวเตอร์ ปกติ
+      }
     };
+
+    handleResize(); // ให้ทำงานทันทีที่โหลดหน้าเว็บ
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // 🎨 useEffect ตัวที่ 2: จัดการระบายสี 4 จังหวัด เมื่อแผนที่ (map) พร้อมทำงาน
+  useEffect(() => {
+    if (!map) return;
+
+    // ดึง Layer ระดับจังหวัด
+    const featureLayer = map.getFeatureLayer(window.google.maps.FeatureType.ADMINISTRATIVE_AREA_LEVEL_1);
+
+    // 🎨 ส่วนที่ 1: เงื่อนไขระบายสี (เตรียมช่องว่างไว้ใส่รหัส)
+    featureLayer.style = (options) => {
+      const pId = options.feature.placeId;
+
+      // 🟠 สีส้ม: ชัยนาท
+      if (pId === 'ChIJIRWw6IqY4TARoEgIsFT7BAE') {
+        return { fillColor: '#FDBA74', fillOpacity: 0.6, strokeColor: '#EA580C', strokeWeight: 2 };
+      }
+      // 🟢 สีเขียว: สุพรรณบุรี
+      if (pId === 'ChIJ7Yh-0iuI4TARlYmRmbPHbBg') {
+        return { fillColor: '#86EFAC', fillOpacity: 0.6, strokeColor: '#16A34A', strokeWeight: 2 };
+      }
+      // 🟡 สีเหลือง: นครปฐม
+      if (pId === 'ChIJ0YjsB-zl4jARAWLcuPG-8JY') {
+        return { fillColor: '#FDE047', fillOpacity: 0.6, strokeColor: '#CA8A04', strokeWeight: 2 };
+      }
+      // 🟣 สีม่วง: นนทบุรี
+      if (pId === 'ChIJO6t2z8CE4jARpO5V399Gdpg') {
+        return { fillColor: '#D8B4FE', fillOpacity: 0.6, strokeColor: '#9333EA', strokeWeight: 2 };
+      }
+
+      // 👇 ทริคแก้บั๊ก: ให้จังหวัดอื่นๆ เป็นสีขาวที่โปร่งใส 99% (มองไม่เห็น แต่จิ้มได้)
+      return { fillColor: '#FFFFFF', fillOpacity: 0.01, strokeOpacity: 0 };
+    };
+    // === 🖱️ ส่วนที่ 2: ดักจับการคลิกเพื่อไปเปลี่ยน Filter ฝั่งขวา ===
+
+    // กำหนดพิกัดและระดับการซูมของแต่ละจังหวัด
+    const provinceCamera = {
+      'chainat': { lat: 14.9500, lng: 100.0251, zoom: 9 }, // ปรับพิกัดชัยนาท
+      'suphanburi': { lat: 14.3000, lng: 99.8817, zoom: 8.8 }, // ปรับพิกัดสุพรรณบุรี
+      'nakhonpathom': { lat: 13.7000, lng: 100.0371, zoom: 9.5 }, // ปรับพิกัดนครปฐม
+      'nonthaburi': { lat: 13.8000, lng: 100.4500, zoom: 10.2 } // ปรับพิกัดนนทบุรี
+    };
+
+    const clickListener = featureLayer.addListener('click', (e) => {
+      if (!e.features || e.features.length === 0) {
+        handleResetView();
+        return;
+      }
+
+      const pId = e.features[0].placeId;
+      let selectedProv = 'all';
+      if (pId === 'ChIJIRWw6IqY4TARoEgIsFT7BAE') selectedProv = 'chainat'; 
+      else if (pId === 'ChIJ7Yh-0iuI4TARlYmRmbPHbBg') selectedProv = 'suphanburi';
+      else if (pId === 'ChIJ0YjsB-zl4jARAWLcuPG-8JY') selectedProv = 'nakhonpathom';
+      else if (pId === 'ChIJO6t2z8CE4jARpO5V399Gdpg') selectedProv = 'nonthaburi';
+      setActiveProvince(selectedProv);
+
+      if (selectedProv !== 'all') {
+        // 1. สั่งแผนที่ซูมเข้าไปตรงพิกัดใหม่ที่ปรับชดเชยแล้ว
+        const cam = provinceCamera[selectedProv];
+        map.panTo({ lat: cam.lat, lng: cam.lng });
+        map.setZoom(cam.zoom);
+
+        // 2. เซ็ตค่าให้ Toast โผล่ขึ้นมา (ส่งแค่ชื่อ slug ไปพอ)
+        setActiveProvinceSlug(selectedProv);
+      } else {
+        handleResetView();
+        setActiveProvinceSlug(null);
+      }
+    });
+    // === 🧹 ส่วนที่ 3: Cleanup คืนหน่วยความจำเวลาปิดหน้าเว็บ ===
+    return () => {
+      clickListener.remove();
+    };
+  }, [map]);
+
+  // 🎯 ฟังก์ชันสำหรับกดแล้วให้แผนที่วิ่งไปหาพิกัดสถานที่
+  const handlePlaceSelect = (loc) => {
+    setSelectedPlace(loc); 
+
+    // 👇 ดึงพิกัดโดยเช็คเผื่อไว้ทั้ง 2 รูปแบบ (loc.lat หรือ loc.coordinates.lat)
+    const latVal = parseFloat(loc.lat || loc?.coordinates?.lat);
+    const lngVal = parseFloat(loc.lng || loc?.coordinates?.lng);
+
+    if (map && !isNaN(latVal) && !isNaN(lngVal)) {
+      map.panTo({ lat: latVal, lng: lngVal });
+      map.setZoom(11); 
+    } 
+    // 👇 เพิ่มคำสั่งนี้: เมื่อคลิกสถานที่แล้ว ให้สลับหน้าจอมือถือกลับไปที่แผนที่
+    setMobileView('map');
   };
-
-  // กรองสถานที่ตามจังหวัดที่เลือก และการค้นหา
-  const filteredLocations = useMemo(() => {
-    let result = allLocations || [];
-
-    // กรองตามจังหวัด (ถ้ามีการคลิกเลือก)
-    if (activeProvince) {
-      result = result.filter((loc) => loc.province === activeProvince);
+  // 🔄 ฟังก์ชันปุ่ม "ดูภาพรวม 4 จังหวัด" (Reset View)
+  const handleResetView = () => {
+    setSelectedPlace(null);
+    setActiveProvinceSlug(null);
+    setShowNetworkModal(false);
+    setActiveProvince('all');
+    if (map) {
+      map.panTo(defaultCenter);
+      map.setZoom(currentZoom);
     }
-    // 👇 เพิ่มการกรองตามห่วงโซ่คุณค่า (Stage) 👇
-    if (activeStage) {
-      result = result.filter((loc) => loc.supplyChainStage === activeStage);
-    }
-
-    // กรองตามช่องค้นหา (ถ้ามีการพิมพ์)
-    if (searchTerm.trim() !== '') {
-      const lowercasedTerm = searchTerm.toLowerCase();
-      result = result.filter((loc) => 
-        loc.name?.toLowerCase().includes(lowercasedTerm)
-      );
-    }
-
-    return result;
-  }, [allLocations, activeProvince, searchTerm, activeStage]);
-
-
-  // กรองเครือข่ายตามจังหวัดที่เลือก 
-  const activeProvinceNetworks = useMemo(() => {
-    if (!activeProvince) return [];
-    return allNetworks?.filter((net) => net.province === activeProvince);
-  }, [allNetworks, activeProvince]);
-
-  const getProvinceLabel = (p) => {
-    const provinceNames = { chainat: "ชัยนาท", suphanburi: "สุพรรณบุรี", nakhonpathom: "นครปฐม", nonthaburi: "นนทบุรี" };
-    return provinceNames[p] || p;
   };
+  // 🧠 โลจิกการกรองข้อมูล (Filter)
+  const filteredLocations = allLocations.filter(loc => {
+    // 1. กรองด้วยคำค้นหา (ชื่อสถานที่)
+    const matchSearch = loc.name.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    // 2. กรองด้วยประเภท (ต้นน้ำ, กลางน้ำ, ...)
+    const matchStage = activeStage === 'all' || loc.supplyChainStage === activeStage;
+    
+    // 3. กรองด้วยจังหวัด
+    // สมมติว่าในข้อมูลมี loc.province เช่น 'chainat', 'suphanburi'
+    const matchProvince = activeProvince === 'all' || loc.province === activeProvince;
 
-  const closeModals = () => {
-    setSelectedLocation(null);
-    setSelectedNetwork(null);
-  };
+    return matchSearch && matchStage && matchProvince;
+  });
 
-  // 👇 1. ตั้งค่าพิกัดซูมของแต่ละจังหวัด (ปรับตัวเลข x, y ได้ตามความเหมาะสมของแผนที่จริง)
-  const zoomConfig = {
-    // 📌 ชัยนาท (ค่อนข้างกลม ใช้ 1-2 จุดก็พอ)
-    'chainat': { 
-      scale:  2.8, x: -8, y: 32 , 
-      anchors: [{ x: 60, y: 18 }], 
-      spreadX: 2, spreadY: 1.5 
-    }, 
-    // 📌 สุพรรณบุรี (ยาวเรียว เราจะกำหนดจุดปลอดภัย 3 จุด เรียงจากบนลงล่าง)
-    'suphanburi': { 
-      scale: 1.8, x: 0, y: 5, 
-      anchors: [
-        { x: 42, y: 28 }, // โซนบน (อ.ด่านช้าง/เดิมบางฯ)
-        { x: 60, y: 40 }, // โซนกลาง (อ.เมือง/สามชุก)
-        { x: 60, y: 50 }  // โซนล่าง (อ.สองพี่น้อง/อู่ทอง)
-      ], 
-      spreadX: 1.5, spreadY: 1.5 // ⚠️ สำคัญ: ลดค่า spread ลง เพื่อให้กระจุกอยู่ใกล้ๆ จุดย่อย ไม่บานออกไปไกล
-    },
-    // 📌 นครปฐม และ นนทบุรี
-    'nakhonpathom': { 
-      scale: 2.8, x: -12, y: -24, 
-      anchors: [{ x: 65, y: 70 }], // ตัวอย่างใส่ 2 จุด
-      spreadX: 2, spreadY: 2 
-    },
-    'nonthaburi': { 
-      scale: 4.2, x: -28, y: -21, 
-      anchors: [{ x: 70, y: 80 }], 
-      spreadX: 2, spreadY: 3 
-    },
-  };
+  // 🔍 ค้นหาข้อมูลเครือข่ายอย่างปลอดภัย (ป้องกัน Error)
+  const currentNetworkItem = allNetworks?.find(net => {
+    // ดึงค่า province ออกมา โดยเช็คเผื่อโครงสร้างทั้ง 2 แบบ
+    const prov = net?.data?.province || net?.province;
+    return prov === activeProvinceSlug;
+  });
 
-  // 👇 2. ฟังก์ชันนับจำนวนสถานที่ในจังหวัดนั้นๆ
-  const getProvinceLocationCount = (provinceSlug) => {
-    if (!allLocations) return 0;
-    return allLocations.filter(loc => loc.province === provinceSlug).length;
-  };
-
-    // ฟังก์ชันจัดการเมื่อคลิกพื้นที่จังหวัด
-  const handleProvinceClick = (provinceSlug) => {
-    if (activeProvince === provinceSlug) {
-      // ถ้าคลิกจังหวัดที่กำลังเลือกอยู่ (คลิกซ้ำเพื่อซูมออก)
-      setActiveProvince(null);
-      
-      // 👇 สั่งให้ปิด Accordion กลับไปด้วยตอนซูมออก
-      setIsProvinceInfoExpanded(false); 
-    } else {
-      // ถ้าคลิกจังหวัดใหม่ (ซูมเข้า)
-      setActiveProvince(provinceSlug);
-      
-      // 👇 สั่งให้เปิด Accordion กางรอไว้เลย! (ค่า Default เมื่อคลิก)
-      setIsProvinceInfoExpanded(true); 
-    }
-  };
+  // แกะเอาข้อมูลออกมาใช้งาน
+  const currentNetworkData = currentNetworkItem?.data || currentNetworkItem || null;
 
   return (
-    <div className="foodmap-container flex flex-col lg:flex-row gap-3">
+    <div className="flex flex-col w-full">
       
-      {/* --- ส่วนที่ 1: แผนที่ SVG (ฝั่งซ้าย) --- */}
-      <div className="w-full h-full lg:w-1/2 p-0 flex items-start justify-center relative bg-blue-50 overflow-hidden">
+      {/* 🌟 ส่วนหัว: สลับระหว่างข้อความปกติ กับ Toast เครือข่าย */}
+      <div className="mb-4 h-20 flex flex-col justify-center">
         
-        {/* 👇 ป้ายแจ้งจำนวนสถานที่ (จะโผล่มาเฉพาะตอนคลิกเลือกจังหวัดแล้ว) 👇 */}
-          {activeProvince && (
-            <div className="absolute z-10 top-3 left-2 md:left-1/2 md:-translate-x-1/2 bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg border border-gray-100 flex items-center gap-3 animate-[fadeIn_0.3s_ease-out]">
-              <span className="font-bold text-gray-800 text-xs md:text-md">
-                📍 {getProvinceLabel(activeProvince)} {/* เปลี่ยนเป็นฟังก์ชันดึงชื่อจังหวัดของคุณ */}
-              </span>
-              <span className="bg-blue-100 text-blue-800 text-xs md:text-md font-extrabold px-2.5 py-0.5 rounded-full">
-                {getProvinceLocationCount(activeProvince)} แห่ง
-              </span>
+          <div className="animate-in fade-in duration-300">
+            <h1 className="text-xl lg:text-2xl font-bold text-gray-900">แผนที่เครือข่ายอาหารปลอดภัย</h1>
+            {!activeProvinceSlug ? (
+              <p className="text-sm lg:text-base text-gray-600">คลิกที่จังหวัดเพื่อดูรายชื่อสถานที่</p>
+            ) : (
+          <div className="flex items-center justify-between animate-in fade-in slide-in-from-bottom-2 duration-300 w-full lg:w-2/3">
+            <div>
+              <p className="text-sm lg:text-base text-gray-600">
+                จังหวัด{getProvinceThai(activeProvinceSlug)}
+              </p>
             </div>
-          )}
-          {/* 👇 กรอบหน้าต่างครอบแผนที่ (บังคับให้ส่วนที่ซูมล้นออกไปถูกซ่อนไว้) 👇 */}
-          <div className="w-full h-auto aspect-square bg-blue-50/50 rounded-2xl overflow-hidden border border-gray-100 relative"
-          // ตรวจจับการขยับของเมาส์เพื่อขยับ Tooltip
-            onMouseMove={(e) => {
-              // ใช้พิกัดเมาส์บนหน้าจอตรงๆ เลย
-              setMousePos({
-                x: e.clientX,
-                y: e.clientY
-              });
-            }}
-
-            onMouseLeave={() => setHoveredProvince(null)}
-            >
-            {/* 👇 กล่อง Tooltip ที่จะวิ่งตามเมาส์ (โผล่มาตอนชี้จังหวัดที่ไม่ได้คลิก) 👇 */}
-            {hoveredProvince && !activeProvince && (
-              <div 
-                className="fixed z-[9999] pointer-events-none bg-gray-900/90 backdrop-blur text-white px-2 py-1 rounded-xl shadow-xl text-sm font-semibold transition-opacity duration-150 whitespace-nowrap flex flex-col gap-1"
-                style={{
-                  left: `${mousePos.x + 15}px`, 
-                  top: `${mousePos.y + 15}px`,
-                }}
+            {currentNetworkData ? (
+              <button 
+                onClick={() => setShowNetworkModal(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-lg transition-colors shadow-sm"
               >
-                <div className="text-base text-blue-200 border-b border-gray-700 pb-1 mb-1">
-                  📍 {getProvinceLabel(hoveredProvince)}
-                </div>
-                <div>มีสถานที่ทั้งหมด <span className="text-yellow-400 font-bold">{getProvinceLocationCount(hoveredProvince)}</span> แห่ง</div>
-              </div>
+                อ่านรายละเอียด
+              </button>
+            ) : (
+              <span className="text-xs text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200">
+                ยังไม่มีข้อมูล
+              </span>
             )}
-            {/* 👇 ตัวแอนิเมชันซูมแผนที่ 👇 */}
-            <div 
-              className="w-full h-auto transition-transform duration-700 ease-in-out flex items-center justify-center relative"
-              style={{
-                transform: activeProvince && zoomConfig[activeProvince]
-                  ? `scale(${zoomConfig[activeProvince].scale}) translate(${zoomConfig[activeProvince].x}%, ${zoomConfig[activeProvince].y}%)`
-                  : 'scale(1) translate(0%, 0%)',
-                transformOrigin: 'center center'
-              }}
+          </div>
+          
+        )}
+        </div>
+      </div>
+  
+    <div className="flex flex-col lg:flex-row gap-6 h-[800px] pb-16 lg:pb-0 relative">
+      
+      {/* 🗺️ โซนแผนที่ (ฝั่งซ้าย) */}
+      <div className={`w-full lg:w-2/3 h-[calc(100vh-180px)] lg:h-full rounded-2xl overflow-hidden shadow-md border border-gray-200 relative ${mobileView === 'map' ? 'block' : 'hidden lg:block'}`}>
+
+
+        {/* ปุ่มดูภาพรวมเดิม */}
+        <button 
+          onClick={handleResetView}
+          className={`absolute left-4 z-10 bg-white/90 backdrop-blur px-4 py-2 rounded-lg top-4 shadow-md border border-gray-100 text-sm font-bold text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition flex items-center gap-2
+      
+          `}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>
+          ดูภาพรวม 4 จังหวัด
+        </button>
+
+        <Map
+          defaultZoom={currentZoom}
+          defaultCenter={defaultCenter}
+          mapId="af65c5cc1deac49962f15548"
+          disableDefaultUI={true}
+          zoomControl={true}
+          clickableIcons={false}
+        >
+          {/* วาดหมุดเฉพาะที่ผ่านการ Filter เท่านั้น */}
+          {filteredLocations.map((loc) => {
+            const latVal = parseFloat(loc.lat || loc?.coordinates?.lat);
+            const lngVal = parseFloat(loc.lng || loc?.coordinates?.lng);
+            if (!isNaN(latVal) && !isNaN(lngVal)) {
+              return (
+                <AdvancedMarker 
+                  key={loc.id || loc.slug} 
+                  position={{ lat: latVal, lng: lngVal }} 
+                  onClick={() => handlePlaceSelect(loc)}
+                >
+                  <Pin />
+                </AdvancedMarker>
+              );
+            }
+            return null;
+          })}
+
+          {selectedPlace && (
+            <InfoWindow
+              position={{ lat: parseFloat(selectedPlace.lat || selectedPlace?.coordinates?.lat), lng: parseFloat(selectedPlace.lng || selectedPlace?.coordinates?.lng) }}
+              pixelOffset={[0, -40]} 
+              onCloseClick={() => setSelectedPlace(null)}
             >
-            <svg viewBox="90 350 150 150" className="w-full bg-white/50">
-              {/* กรุงเทพฯ */}
-              <path id="bangkok" d="m 217.28844,457.46255 0.7,-0.33 2,0.66 0.51,-0.71 0.92,0.42 0.02,0.76 0.97,0.03 0.04,0.41 3.31,0.12 1.17,0.83 1.47,0.08 6.19,-1.38 6.29,-0.59 0,0 -0.52,5.83 -0.26,0.81 -0.69,-0.1 3.08,2.5 -1.91,1.66 -3.67,6.17 0.39,0.25 0,0 -0.12,0.53 -4.77,-1.85 -5.27,-0.12 0.13,1.57 -0.9,2.71 -2.11,-0.72 -0.07,-0.64 -0.79,0.33 -0.52,1.32 -4.51,-1.14 0.54,-1.65 -2.15,-0.97 -0.62,2.33 -0.8,0.2 -0.91,-0.7 -0.28,0.43 -0.19,3.13 0.4,1.56 -0.76,0.26 -1.92,-0.44 -0.75,0.99 -0.34,-0.82 -0.7,0.04 -0.68,3.38 0.54,3.67 0,0 -3.01,0.59 0,0 -0.23,-1.22 1.03,-2.14 -0.14,-1.23 -1.56,0.21 -0.69,-2.14 -0.54,0.19 0.35,-0.35 -0.76,-2.66 -0.99,-0.74 -1.08,-0.06 -0.55,-6.38 0,0 -0.14,-4.58 -0.67,-1.54 0,0 0.72,1.26 8.74,0.44 0.75,0.59 2.05,-0.77 1.01,-0.87 -0.58,-0.31 0.13,-0.52 2.35,-1.71 z" className="fill-gray-200 stroke-white stroke-[0.5]" />
-              {/* ปทุมธานี */}
-              <path id="pathumthani" d="m 234.82844,437.15255 4.53,-2.12 0.13,2.09 3.94,-2 0,0 -0.37,2.5 -2.14,1.16 -0.01,17.98 0,0 -0.03,1 0,0 -6.29,0.59 -6.19,1.38 -1.47,-0.08 -1.17,-0.83 -3.31,-0.12 -0.04,-0.41 -0.97,-0.03 -0.02,-0.76 -0.92,-0.42 -0.51,0.71 -2,-0.66 -0.7,0.33 0,0 -1.59,-0.44 -0.59,0.75 -2.11,0.56 -2.51,-2.39 -0.6,0.32 -1.64,-1.02 -4.53,-0.73 -2.08,-4.32 0.84,-4.15 0,0 8.99,0.27 2.61,-1.16 2.16,1.09 3.64,-1.53 1.03,0.37 0.29,-1.01 z" className="fill-gray-200 stroke-white stroke-[0.5]" />
-              {/* กาญจนบุรี */}
-              <path id="kanchanaburi" d="m 82.928436,339.33255 0.89,-0.37 0.38,1.01 2.04,0.35 0.37,0.97 1.13,-0.79 0.43,0.33 0.88,2.4 4.21,5.64 -0.49,0.8 -0.86,-0.25 0,0.71 3.59,1.8 -0.23,2.2 1.52,1.16 3.830004,5.53 0.5,-0.15 2.01,1.61 1.34,2.27 -0.3,1.14 1.81,0.57 0.74,1.45 1.25,-0.39 0.9,0.35 0.55,2.77 1.33,1.75 0,0 1.15,1.25 0.38,1.28 -0.56,2.7 0.81,1.3 -0.61,1.02 1.25,1.26 1.99,0.79 1.3,-0.28 0.59,0.59 2.51,-0.46 0.32,-0.65 1.55,0.21 0.31,0.32 -0.77,0.63 1.76,1.54 1.4,-0.14 0.59,-0.61 0.86,0.88 1.96,0.12 1.57,1.7 1.92,-0.46 0,0 1.3,0.93 1.16,2.27 -0.65,0.86 0.71,0.96 -0.35,2.18 -2.31,2.09 0.76,1.88 1.07,1.43 1.45,0.47 0.34,0.96 1.49,1.41 2.01,0.43 2.08,-1.03 1.18,0.34 1.64,3.77 0.22,1.7 3.35,-0.39 2.39,-1.38 0.19,-0.56 -0.82,-1.13 0.62,-1.45 -0.39,-1.78 0.27,-0.59 1.45,1.24 0.75,-0.44 2.39,0.57 2.29,-1.54 2.73,2.1 1.78,0.67 0.82,1 1.87,0.47 1.75,-0.3 0.94,0.58 -0.04,0.88 -1.37,1.33 1.35,0.73 0.06,0.88 1.48,1.92 0.26,1.6 0.71,0.99 -1.73,0.42 -0.62,1.61 1.61,1.07 -0.66,1.99 0.6,2.9 -0.34,4.4 0.56,1.91 -0.46,1.18 0.26,3.17 -0.46,0.82 0.63,1.85 -0.19,5.84 -0.63,-0.17 -0.43,1.47 -1.38,1.09 -1.14,-0.59 -0.65,1.19 -0.79,-0.23 -1.05,2.89 -0.1,2.56 0.27,0.64 1.41,0.44 2.49,-0.59 0.39,0.94 0.89,0.4 0.08,1.02 2.18,0.43 0,0 0.68,1.18 -1.6,2.95 1.02,0.09 0.57,1.89 1.08,0.52 0.52,0.97 0,0 -1.42,2 -1.28,3.77 -1.1,0.05 0.38,0.79 -0.64,0.65 0.12,1.2 -0.54,1.23 -0.55,0.03 -0.65,-0.97 -2.97,-0.72 -0.58,0.42 -2.08,-0.13 -2.92,-1.21 -2.06,2.29 -5.86,3.76 -2.98,-0.58 -2.28,-2.74 -1.19,1.75 -2.58,0.49 -4.16,1.85 -2.87,-0.19 -0.82,0.63 -0.93,-1.4 -1.23,1.27 -2.93,-0.48 -1.56,1.45 -1.78,-0.77 -0.39,0.85 0,0 -0.72,-0.63 -0.07,-1.2 -2.15,-1.22 -0.02,-2.76 -0.44,-1.07 -0.99,-0.75 0.72,-1.9 -0.06,-1.58 -0.51,-0.42 -1.51,0.22 -1.28,-2.45 -1.27,-1 -1.44,-0.36 -1.48,-4.94 -1.83,-0.93 -0.25,-3.38 -0.6,-1.03 -1.07,0.22 -1.59,-1.27 -1.43,0.16 -1.49,-1.1 -0.52,-1.43 -2.74,-2.07 -1.110004,-0.05 -0.81,-1 -1.49,-0.59 -3.12,-2.8 -1.03,-0.34 -0.99,-1.01 -0.25,-1.01 -1.1,0.02 -3.6,-2.94 -1.03,0.22 -0.75,-0.64 -0.52,-1.55 0.2,-1.6 -0.43,-0.56 -0.94,0.38 -0.72,-0.94 -0.5,-2.25 -0.67,-0.39 0.07,-0.81 -1.01,-0.67 -1.53,-2.27 -1.46,-4.43 -2,0.67 -0.16,-3.31 -1.6,-2.44 -4.54,-3.59 -0.19,-1.46 -0.72,-0.73 -1.31,-0.99 -0.67,0.17 -1.79,-2.81 -0.18,-1.26 -3.14,-4.16 0.9,-1.9 -2.05,-2.36 1.31,-1.72 -0.56,-0.58 -0.06,-1.09 -0.8,-0.5 0.05,-1.48 -1.55,-1.08 0.29,-2.7 1.37,-1.43 -3.25,-3.77 -0.17,-1.2 0.53,-2.54 1.51,-1.86 -0.99,-3.74 0.73,-0.27 0.74,0.8 1.06,0.23 1.16,-0.4 3.51,-3.76 -0.54,-1.39 0.52,-0.89 4.56,2.06 2.42,2.01 0.88,-1.21 -0.41,-1.63 -1.19,-0.68 1.55,-1.22 -0.29,-1.9 0.37,-0.68 1.13,0.05 2.87,-1.33 0.33,-0.66 3.59,1.37 0.51,0.58 0,1.17 0.8,0.73 1.45,-2.29 0.57,-5.2 -0.45,-5.87 -1.24,-2.81 -0.49,-2.52 z" className="fill-gray-200 stroke-white stroke-[0.5]" />
-              {/* อยุธยา */}
-              <path id="ayutthaya" d="m 213.63844,407.38255 0.31,0.88 2.33,-0.73 0.3,0.77 1.96,-0.29 1.36,0.71 0,0 -1.19,1.58 -0.65,2.41 1.89,1.35 0.06,1.64 4.34,0.03 0.39,-1.93 1.11,-0.17 0.67,0.71 0.96,-0.46 0.08,0.61 0.92,0.01 0.02,-0.71 0.79,0.81 2.75,0.15 -0.49,1.17 0.26,1.33 -2.1,0.97 0.83,1.59 0.74,0.09 -0.45,0.65 0.52,0.06 -0.42,0.37 0.25,0.91 -0.57,0.9 0.45,2.05 -0.59,0.57 0.69,0.47 0.66,-0.22 0.13,0.82 1.04,0.54 -0.78,0.77 0.48,1.13 -1.33,2.4 1,0.38 2.41,-0.33 0.06,5.78 0,0 -13.63,6.92 -0.29,1.01 -1.03,-0.37 -3.64,1.53 -2.16,-1.09 -2.61,1.16 -8.99,-0.27 0,0 -0.61,-0.85 -2.31,-0.87 -1.44,1.01 0,0 0.28,-3.08 -2.52,-0.29 -0.29,-2.46 0,0 0.04,-5.18 1.66,-2.82 -0.02,-3.97 0.95,-1.39 -0.56,-1.81 -1.65,-0.51 -0.29,-1.66 0.59,-1.49 0,0 0.33,-0.59 1.46,0.21 0.46,-0.69 2.31,0.6 5.97,-1.47 0.61,2.1 -0.01,2.45 1.28,-0.19 0.35,0.68 1.22,-0.11 2.67,-1.48 0.03,-2.91 -0.6,-0.72 0.41,-0.87 -0.43,-1.77 -0.86,-1.01 0.92,-1.04 -0.03,-1.96 0.78,-1.46 -0.4,-1.67 z" className="fill-gray-200 stroke-white stroke-[0.5]" />
-              {/* อ่างทอง */}
-              <path id="angthong" d="m 194.59844,399.30255 3.11,-0.5 1.37,1.12 0.48,-0.52 0.79,0.06 -0.05,-0.64 1.14,-0.29 0.93,1.09 -0.07,1.1 0.93,0.76 0.92,-0.35 0.81,1.53 1.75,-0.91 1.22,0.28 -0.59,0.2 -0.09,1.45 2.13,0.08 1.48,0.73 0,0 0.55,0.92 1.26,0.3 0.52,1.18 0.83,0.03 -0.38,0.46 0,0 -0.86,1.39 0.4,1.67 -0.78,1.46 0.03,1.96 -0.92,1.04 0.86,1.01 0.43,1.77 -0.41,0.87 0.6,0.72 -0.03,2.91 -2.67,1.48 -1.22,0.11 -0.35,-0.68 -1.28,0.19 0.01,-2.45 -0.61,-2.1 -5.97,1.47 -2.31,-0.6 -0.46,0.69 -1.46,-0.21 -0.33,0.59 0,0 -1.01,-0.12 -0.83,-1.64 -1.28,-1.07 0.11,-1.13 -0.85,-1.44 0.98,-1.3 -1.02,-2.05 2.4,-2.97 -1.47,-2.06 0.49,-2.39 -0.69,-1.76 0.19,-2.35 0.94,-0.38 z" className="fill-gray-200 stroke-white stroke-[0.5]" />
-              {/* ราชบุรี */}
-              <path id="ratchaburi" d="m 170.96844,457.48255 3.31,0.84 -0.75,2.13 -1.22,0.23 1.03,2.1 -0.73,2.15 0.62,-0.42 1.55,0.27 0.55,0.9 1.04,-0.38 0.36,1.58 0.48,0.21 0.03,0.64 -0.9,0.32 -0.39,1.68 -0.74,0.79 0.19,1.13 0.68,0.81 3.17,-0.32 1.84,-1.16 -0.11,3.53 0.61,0.73 2.16,-0.28 -0.51,2.99 0.49,0.12 0,0 0.19,0.87 -1.05,0.68 0.02,0.66 -1.51,0.49 0.72,1.08 -0.37,1.14 0.48,2.24 -0.09,0.64 -0.82,0.54 -0.05,1.53 0,0 -0.48,0.14 -0.84,-0.66 -0.98,1.38 -0.56,-0.33 -1.4,0.91 -0.33,-0.7 -1.7,-0.21 -0.76,-1.02 -0.73,0.23 0.43,0.72 -1.18,0.8 -0.77,1.32 -0.08,2.74 -1.61,3.77 -0.68,3.22 0,0 -2.4,-0.82 -0.77,0.03 -0.47,0.7 -3.01,-0.96 -3.56,1.59 -1.39,1.97 -1.31,0.44 -0.09,4.91 -1.62,0.24 -0.28,0.62 -2.26,-0.24 -1.68,0.57 -0.77,-0.52 -1.49,0.13 -1.48,-0.48 -0.99,2.03 -1.97,-1.39 -1.19,1.25 -1.33,-0.13 -0.87,-0.92 -0.89,0.02 -1.06,-1.34 -1.69,-0.09 -0.43,-1.04 -0.58,0.1 -0.54,-0.72 -1.09,1.4 -0.75,0.13 -0.34,1.22 0.39,1.73 -3.55,1.96 -2.8,-3.68 -1.3,-0.35 0,0 -0.42,-0.88 0.26,-0.86 -0.78,-1.52 0.97,-0.42 -1.59,-2.13 0.24,-1.72 1.21,-1.41 -0.36,-2.28 0.61,-2.92 -0.8,-2.41 0.6,-0.67 -0.29,-1.49 -1.01,-1.07 0.29,-3.23 -1.89,-2.11 0.96,-0.83 -0.81,-1.62 0.34,-1.47 -0.43,-3.52 0.43,-0.53 -0.43,-2.75 0,0 0.39,-0.85 1.78,0.77 1.56,-1.45 2.93,0.48 1.23,-1.27 0.93,1.4 0.82,-0.63 2.87,0.19 4.16,-1.85 2.58,-0.49 1.19,-1.75 2.28,2.74 2.98,0.58 5.86,-3.76 2.06,-2.29 2.92,1.21 2.08,0.13 0.58,-0.42 2.97,0.72 0.65,0.97 0.55,-0.03 0.54,-1.23 -0.12,-1.2 0.64,-0.65 -0.38,-0.79 1.1,-0.05 1.28,-3.77 z" className="fill-gray-200 stroke-white stroke-[0.5]" />
-              {/* สิงห์บุรี */}
-              <path id="singburi" d="m 202.37844,377.11255 2.58,1.21 2.77,2.53 0,0 3.28,1.99 -0.49,1.75 -1.08,0.74 0.12,3.37 -1.59,0.82 0.34,2.28 0.57,0.66 -0.25,1.27 0.63,0.25 0.1,0.61 0.8,0.15 0.65,1.43 -0.17,0.98 0.61,1.1 -0.11,3.02 1.07,0.98 -1.35,2.24 0,0 -1.48,-0.73 -2.13,-0.08 0.09,-1.45 0.59,-0.2 -1.22,-0.28 -1.75,0.91 -0.81,-1.53 -0.92,0.35 -0.93,-0.76 0.07,-1.1 -0.93,-1.09 -1.14,0.29 0.05,0.64 -0.79,-0.06 -0.48,0.52 -1.37,-1.12 -3.11,0.5 0,0 -1.57,-1.34 0.93,-2.27 -0.08,-2.12 0.52,-0.66 -0.98,-0.11 -0.21,-1 0.58,0.05 0.43,-0.58 -2.15,0.08 -0.54,-1.34 -0.01,-0.66 0.98,-0.32 0.38,-1.05 0,0 3.91,0.66 0.83,-0.53 0.39,-0.69 -1.19,-1.92 0.67,-0.8 -0.11,-0.56 -0.81,0.17 -0.71,-1.07 -0.92,-0.18 -0.08,-1.87 0.3,-0.41 3.91,-0.58 0.16,-1.19 z" className="fill-gray-200 stroke-white stroke-[0.5]" />
-              {/* สระบุรี */}
-              <path id="saraburi" d="m 219.89844,408.72255 1.6,-1.62 -1.42,-2.33 0.08,-0.82 3.33,0.58 2.43,-2.5 1.29,0.15 0.86,-0.6 1.78,-3.46 1.08,0.76 1.56,0.23 1.12,-0.14 0.34,-0.59 1.78,0.04 2.31,2.83 0.83,-0.11 0.31,-0.54 0.82,0.2 0.87,0.95 2.05,0.98 1.31,-0.32 0.5,-0.77 -1.02,-1.17 -0.07,-3.19 0.79,-0.83 2.72,0.17 1.06,1.31 2.73,1.83 -0.02,-0.48 0.69,-0.02 -0.26,-1.57 0.58,0.25 0.76,-1.39 -1.33,-0.03 -0.23,-0.63 0.94,-0.76 0.25,0.5 0.42,-0.22 -0.72,-1.32 0.28,-0.29 -0.61,-0.58 1.12,-0.96 0.19,-0.93 4.01,0.59 2.7,-1.64 2.16,-0.07 0.58,-1.29 0.59,1.51 1.04,0.42 1.21,-1.74 0.12,-2.31 3.12,-0.2 1.65,-1.35 0.21,-2.37 0.7,-1.21 1.63,0.55 1.74,-0.49 0,0 0.86,2.21 -0.25,1.12 0.63,0.93 0.02,1.84 1.27,3.06 0.33,3.31 -2.59,1.39 -2.26,2.45 0,0 -2.49,1.53 0,0 -0.55,0.07 -0.16,1.45 -1.81,0.46 -0.58,1.48 -0.48,0.11 -0.63,-0.65 -0.15,1.33 -3.3,-0.49 -1,-0.97 -0.23,-0.93 -0.89,-0.02 -0.16,0.76 -0.6,0.08 0.38,0.56 -0.48,2.01 1.12,1.9 0.03,5.2 0.71,1.51 -2.22,2.98 0.14,0.64 1.81,1.13 2.03,2.67 0,0 0.04,0.58 -1.14,0.02 0.59,0.8 -0.74,0.85 0.36,1.11 -0.86,-0.46 -0.37,0.59 0.08,1.09 -0.59,0.81 0.58,2.04 -1.67,0.43 -0.52,1.26 -0.96,0.37 -0.89,-1.91 -1.66,-0.8 -2.69,-0.08 -0.73,-0.54 -0.33,-1.05 -0.96,-0.57 -0.12,1.56 0.58,0.96 -0.38,2.3 -2.58,2.83 -2.05,0.37 -0.09,0.72 -0.75,-0.25 -0.47,-0.97 -1.33,-0.19 -0.29,1.37 0.41,1.03 0,0 -3.94,2 -0.13,-2.09 -4.53,2.12 0,0 -0.06,-5.78 -2.41,0.33 -1,-0.38 1.33,-2.4 -0.48,-1.13 0.78,-0.77 -1.04,-0.54 -0.13,-0.82 -0.66,0.22 -0.69,-0.47 0.59,-0.57 -0.45,-2.05 0.57,-0.9 -0.25,-0.91 0.42,-0.37 -0.52,-0.06 0.45,-0.65 -0.74,-0.09 -0.83,-1.59 2.1,-0.97 -0.26,-1.33 0.49,-1.17 -2.75,-0.15 -0.79,-0.81 -0.02,0.71 -0.92,-0.01 -0.08,-0.61 -0.96,0.46 -0.67,-0.71 -1.11,0.17 -0.39,1.93 -4.34,-0.03 -0.06,-1.64 -1.89,-1.35 0.65,-2.41 z" className="fill-gray-200 stroke-white stroke-[0.5]" />
-              {/* นครนายก */}
-              <path id="nakhonnayok" d="m 262.95844,420.85255 0.21,-0.67 2.22,-1.59 0.46,1.55 1.47,-0.55 0.41,1.78 3.59,1.62 1.12,1.15 -0.11,0.58 1.08,0.39 0.1,0.67 1.65,1.67 0.69,-0.38 0,0 2.9,1.68 0.53,1.37 0.91,0.77 0,1.14 0.55,0.62 -0.49,2.9 -5.54,0.99 -1.35,-1.41 -0.91,0.04 -0.22,2.38 0.39,0.69 -0.77,1.58 -1.83,0.52 -1.12,1.49 -0.97,0.2 -1.76,1.69 -0.14,1.1 1.43,1.4 0.78,2.9 -0.55,0.34 -0.49,-0.51 -1.38,1.53 -1.23,-0.76 -3.49,0.45 -0.72,0.73 -0.21,1.43 -0.43,0.03 0.19,0.66 -1.32,0.48 -0.37,-0.27 -0.44,0.63 -1.29,0.36 -0.41,-0.31 0.19,1.92 -0.34,0.28 0,0 -6.24,-0.51 -8.8,1.16 0,0 0.01,-17.98 2.14,-1.16 0.37,-2.5 0,0 -0.41,-1.03 0.29,-1.37 1.33,0.19 0.47,0.97 0.75,0.25 0.09,-0.72 2.05,-0.37 2.58,-2.83 0.38,-2.3 -0.58,-0.96 0.12,-1.56 0.96,0.57 0.33,1.05 0.73,0.54 2.69,0.08 1.66,0.8 0.89,1.91 0.96,-0.37 0.52,-1.26 1.67,-0.43 -0.58,-2.04 0.59,-0.81 -0.08,-1.09 0.37,-0.59 0.86,0.46 -0.36,-1.11 0.74,-0.85 -0.59,-0.8 1.14,-0.02 z" className="fill-gray-200 stroke-white stroke-[0.5]" />
-              {/* ลพบุรี */}
-              <path id="lopburi" d="m 271.66844,344.59255 1.03,6.61 -0.67,7.53 0.64,3.14 0,0 -0.33,2.66 0.54,3.5 -0.54,0.15 -1.61,-0.82 0.72,1.48 -0.07,2.65 0.55,0.12 1.33,2.7 -0.28,1.46 0.59,1.62 0.16,2.66 0.73,1.68 0,0 -1.74,0.49 -1.63,-0.55 -0.7,1.21 -0.21,2.37 -1.65,1.35 -3.12,0.2 -0.12,2.31 -1.21,1.74 -1.04,-0.42 -0.59,-1.51 -0.58,1.29 -2.16,0.07 -2.7,1.64 -4.01,-0.59 -0.19,0.93 -1.12,0.96 0.61,0.58 -0.28,0.29 0.72,1.32 -0.42,0.22 -0.25,-0.5 -0.94,0.76 0.23,0.63 1.33,0.03 -0.76,1.39 -0.58,-0.25 0.26,1.57 -0.69,0.02 0.02,0.48 -2.73,-1.83 -1.06,-1.31 -2.72,-0.17 -0.79,0.83 0.07,3.19 1.02,1.17 -0.5,0.77 -1.31,0.32 -2.05,-0.98 -0.87,-0.95 -0.82,-0.2 -0.31,0.54 -0.83,0.11 -2.31,-2.83 -1.78,-0.04 -0.34,0.59 -1.12,0.14 -1.56,-0.23 -1.08,-0.76 -1.78,3.46 -0.86,0.6 -1.29,-0.15 -2.43,2.5 -3.33,-0.58 -0.08,0.82 1.42,2.33 -1.6,1.62 0,0 -1.36,-0.71 -1.96,0.29 -0.3,-0.77 -2.33,0.73 -0.31,-0.88 0,0 0.38,-0.46 -0.83,-0.03 -0.52,-1.18 -1.26,-0.3 -0.55,-0.92 0,0 1.35,-2.24 -1.07,-0.98 0.11,-3.02 -0.61,-1.1 0.17,-0.98 -0.65,-1.43 -0.8,-0.15 -0.1,-0.61 -0.63,-0.25 0.25,-1.27 -0.57,-0.66 -0.34,-2.28 1.59,-0.82 -0.12,-3.37 1.08,-0.74 0.49,-1.75 -3.28,-1.99 0,0 2.83,-3.96 0.63,0.34 2.24,-1.5 -0.12,-1.8 1.73,-1.59 0.56,-1.27 1.13,-0.56 0.8,-1.15 1.61,-0.46 -0.24,-1.03 0.41,-1.04 -0.28,-0.59 -0.83,-0.08 0.12,-0.46 0.81,-0.89 1.38,-0.45 0.71,-1.68 0.82,-0.26 -0.35,-1.48 1.14,-4.17 -0.19,-0.88 1.43,-0.95 4.62,-1.21 2.62,-1.26 -0.12,-2.15 -1.64,-1.06 0.95,-0.75 0,0 2.07,-0.1 1.23,2.44 1.09,0.62 0.9,-0.07 0.97,0.67 2.87,-0.25 3.56,2.01 0.8,1.78 1.24,0.53 -0.11,1.82 2.17,1.54 0.95,1.79 3.14,0.1 0.42,-0.65 1.07,-0.35 0.93,1.04 1.99,0.75 3.68,-0.25 1.02,0.68 1.3,-1.58 3.51,-1.33 1.97,-1.82 -0.18,-2.76 0.34,-0.48 -0.64,-1.46 0.58,-1.18 -0.17,-3.22 -1.01,-0.53 -0.02,-0.52 0.95,-0.65 0.51,-2.08 z" className="fill-gray-200 stroke-white stroke-[0.5]" />
-              {/* อุทัยธานี */}
-              <path id="ีuthaithani" d="m 120.98844,329.66255 1.68,0.14 0.46,0.99 1.32,-0.4 1.1,1.16 0.88,0.04 1.36,1.34 0.77,1.74 1.92,0.36 1.31,1.61 2.34,0.13 1.62,0.76 1.09,1.19 -0.27,0.74 0.79,1.94 2.87,0.75 2.18,2.22 0.95,-0.25 0.28,1.52 1.55,-0.4 1.27,0.48 3.38,-2.03 2.15,-2.59 2.21,-0.79 2.16,-2.07 3.07,-1.17 1.01,0.26 0.98,-0.37 4.06,3.14 4.49,1.75 0.28,-2.6 4.39,-1.36 0.78,3.52 -0.32,1.93 0.56,6.73 0.78,-0.45 2.72,1.65 0.83,-0.62 -0.21,-0.88 1.13,-0.22 0.55,2.38 1.12,0.9 1.23,0.25 -0.82,2.21 1.51,-0.09 1.66,0.6 0,0 -0.85,0.36 -0.17,0.68 1.2,1.92 -1.62,-0.36 -0.45,0.7 1.56,1.35 0.15,0.95 -1.42,1.26 -0.05,1.57 -1.43,1.49 -0.17,-0.9 -0.91,-0.54 -1.12,0.35 -1.3,-0.74 -2.68,0.14 -0.52,-0.41 -4.96,1.24 -0.55,-1.1 -1.67,-0.56 -4.24,-0.48 -4.5,2.79 0.01,1.39 0.71,0.86 -0.65,0.68 0.07,0.88 2.46,3.34 -0.79,0.75 3.92,4.84 -2.24,2.69 0.75,0.92 -0.39,1.16 -3.28,1.65 -0.37,1.47 -0.54,0.24 0,0 -0.26,-0.3 -1.5,0.45 -2.02,-0.94 -1.73,-0.09 -0.49,0.79 0.41,0.58 -0.15,2.13 -3.1,-0.54 -5.29,-2.66 -3.75,-0.4 -0.44,0.52 -1.1,-1.35 -0.76,-2.36 0.15,-0.81 -3.62,0.01 -2.08,-2.3 -0.99,0.08 0.06,0.67 -1.27,1.09 -0.39,1.14 0.76,0.96 -0.39,0.75 -1.13,0.53 -0.01,0.85 0,0 -1.92,0.46 -1.57,-1.7 -1.96,-0.12 -0.86,-0.88 -0.59,0.61 -1.4,0.14 -1.76,-1.54 0.77,-0.63 -0.31,-0.32 -1.55,-0.21 -0.32,0.65 -2.51,0.46 -0.59,-0.59 -1.3,0.28 -1.99,-0.79 -1.25,-1.26 0.61,-1.02 -0.81,-1.3 0.56,-2.7 -0.38,-1.28 -1.15,-1.25 0,0 1.26,-0.19 0.42,-1.62 -0.18,-2.16 0.87,-0.46 -0.2,-1.28 1.52,-1.79 -0.51,-0.92 0,-2.31 0.82,-0.62 0.15,-2.09 0.93,-1.37 0.66,-0.04 -0.05,-1.59 -0.84,-1.74 1.57,-3.73 -0.33,-0.93 -1.19,-0.91 -0.53,-2.25 0.2,-0.51 2.89,-1.3 0.21,-2.05 1.08,-1.21 0.24,-1.16 -0.38,-1.52 1.83,-4.64 -0.74,-2.24 z" className="fill-gray-200 stroke-white stroke-[0.5]" />
-              {/* นครสวรรค์ */}
-              <path id="ีnakhonsawan" d="m 181.53844,301.63255 0.81,0.31 0.46,0.95 1.84,0.37 0.89,1.08 -1,2.15 1.17,1.04 -0.06,0.82 1.3,1.33 -0.27,0.37 0.6,1.15 -0.16,0.76 0.98,0.8 0.04,1.17 1.15,2.1 0.87,0.62 -0.04,1.36 1.01,0.89 0.22,1.65 0.5,-0.7 1.1,0 1.61,0.97 1,-2.79 1.23,0.1 0.53,1.35 3.81,-2.05 -0.05,-1.23 1.54,0.89 -1.05,2.39 1.25,0.36 1.71,-0.41 3.02,0.91 3.46,0.11 4.06,-1.07 0.33,0.34 -1.03,1.29 0.23,0.4 0.49,-0.69 1.64,-0.7 1.82,-2.04 2.97,-1.22 2.26,-0.8 1.31,0.14 1.93,-0.56 1.47,0.54 2.72,-0.77 0,0 0.9,0.35 0.04,0.8 -1.22,3.11 -0.15,1.91 0.67,0.91 2.5,1.23 -0.11,2.44 -0.82,1.39 1.48,5.02 -0.01,2.81 1.81,0.4 0.2,0.81 -0.33,0.73 -1.12,0.65 -0.06,2.12 -0.51,1.11 0.45,1.12 -1.12,1.22 0.59,0.71 -0.57,0.86 0.24,0.28 -1.43,2.18 -1.52,0.3 -0.62,0.74 0,0 -0.95,0.75 1.64,1.06 0.12,2.15 -2.62,1.26 -4.62,1.21 -1.43,0.95 0.19,0.88 -1.14,4.17 0.35,1.48 -0.82,0.26 -0.71,1.68 -1.38,0.45 -0.81,0.89 -0.12,0.46 0.83,0.08 0.28,0.59 -0.41,1.04 0.24,1.03 -1.61,0.46 -0.8,1.15 -1.13,0.56 -0.56,1.27 -1.73,1.59 0.12,1.8 -2.24,1.5 -0.63,-0.34 -2.83,3.96 0,0 -2.77,-2.53 -2.58,-1.21 0,0 0.72,-0.56 -0.49,-0.65 0.01,-1.31 -3.31,-2.43 -0.97,-3.46 -0.92,-1.19 -0.47,-2.75 -1.69,-2.46 -2.45,-2.84 -2.15,-0.67 -1.33,-1.07 -0.55,0.29 -0.23,-1.21 -2.39,-1 0,0 -1.66,-0.6 -1.51,0.09 0.82,-2.21 -1.23,-0.25 -1.12,-0.9 -0.55,-2.38 -1.13,0.22 0.21,0.88 -0.83,0.62 -2.72,-1.65 -0.78,0.45 -0.56,-6.73 0.32,-1.93 -0.78,-3.52 -4.39,1.36 -0.28,2.6 -4.49,-1.75 -4.06,-3.14 -0.98,0.37 -1.01,-0.26 -3.07,1.17 -2.16,2.07 -2.21,0.79 -2.15,2.59 -3.38,2.03 -1.27,-0.48 -1.55,0.4 -0.28,-1.52 -0.95,0.25 -2.18,-2.22 -2.87,-0.75 -0.79,-1.94 0.27,-0.74 -1.09,-1.19 -1.62,-0.76 -2.34,-0.13 -1.31,-1.61 -1.92,-0.36 -0.77,-1.74 -1.36,-1.34 -0.88,-0.04 -1.1,-1.16 -1.32,0.4 -0.46,-0.99 -1.68,-0.14 0,0 -0.85,-1.44 -1.3,-0.43 -0.51,-0.78 0.02,-2.73 -0.58,-1.05 0,0 0.5,0.22 2.22,-2.05 0.71,0.44 0.58,-0.2 0.49,-0.83 1.27,-0.57 -0.08,-0.6 0.97,0.57 0.51,-1.13 0.63,0.6 0.29,-0.85 0.7,0.77 0.34,-0.45 2.95,2.55 0.28,-0.31 1.23,1.38 0,-0.91 1.43,-0.06 -0.03,-0.87 0.62,0.05 -0.02,-0.69 0.65,1.06 1.88,-1.01 1.08,0.71 2.44,0.38 1.24,-0.54 0.28,0.73 2.41,0.58 0.63,-0.02 0.17,-1.49 1.5,-0.43 1.46,0.21 0.24,0.47 0.84,-0.46 1.16,1.29 3.36,0.57 0.55,0.73 1.33,0.32 1.64,1.81 3.41,-1.52 2.25,1.48 0.56,-1.65 1.41,-1.3 -0.15,-1.4 1.16,-0.54 1.21,0.53 0.19,-1.43 1.18,-0.62 0.28,-0.97 1.13,-1.09 -0.05,-2.58 2.89,-2.28 3.05,-0.22 5.64,-6.93 1.44,-0.4 -1.02,-1.74 z" className="fill-gray-200 stroke-white stroke-[0.5]" />
+              <div className="p-1 max-w-[250px]">
+                {selectedPlace.imageUrl && <img src={selectedPlace.imageUrl} alt={selectedPlace.name} className="w-full h-32 object-cover rounded-lg mb-3" />}
+                <h3 className="font-bold text-lg text-gray-800 mb-1 leading-tight">{selectedPlace.name}</h3>
+                <p className="text-xs text-gray-600 mb-3">จ.{getProvinceThai(selectedPlace.province)}</p>
+                <div className="flex flex-col gap-2">
+                  <button onClick={() => setModalLocation(selectedPlace)} className="bg-gray-800 text-white text-xs py-2 rounded font-medium hover:bg-gray-900 w-full transition-colors">ดูรายละเอียด</button>
+                </div>
+              </div>
+            </InfoWindow>
+          )}
+        </Map>
+      </div>
 
-              {/* ========================================== */}
-              {/* 4 จังหวัดหลัก (Interactive) */}
-              {/* ========================================== */}
-              
-              {/* 1. ชัยนาท */}
-              <g onClick={() => handleProvinceClick('chainat')} className="cursor-pointer group">
-                <path id="chainat" 
-                onClick={() => handleProvinceClick('chainat')} 
-                onMouseEnter={() => setHoveredProvince('chainat')}
-                onMouseLeave={() => setHoveredProvince(null)}
-                d="m 186.15844,355.80255 2.39,1 0.23,1.21 0.55,-0.29 1.33,1.07 2.15,0.67 2.45,2.84 1.69,2.46 0.47,2.75 0.92,1.19 0.97,3.46 3.31,2.43 -0.01,1.31 0.49,0.65 -0.72,0.56 0,0 -3.15,1.9 -0.16,1.19 -3.91,0.58 -0.3,0.41 0.08,1.87 0.92,0.18 0.71,1.07 0.81,-0.17 0.11,0.56 -0.67,0.8 1.19,1.92 -0.39,0.69 -0.83,0.53 -3.91,-0.66 0,0 -4.49,2.88 -1.53,-2.32 -4.87,-1.03 -0.27,0.58 0.64,1.05 -0.26,1.3 -5.24,1.07 -1.02,-0.57 -4.47,-0.13 -1.99,-1.89 -1.73,0.27 -2.29,-0.5 -1.93,-1.24 -2.9,-0.06 -0.41,-1.01 0,0 0.54,-0.24 0.37,-1.47 3.28,-1.65 0.39,-1.16 -0.75,-0.92 2.24,-2.69 -3.92,-4.84 0.79,-0.75 -2.46,-3.34 -0.07,-0.88 0.65,-0.68 -0.71,-0.86 -0.01,-1.39 4.5,-2.79 4.24,0.48 1.67,0.56 0.55,1.1 4.96,-1.24 0.52,0.41 2.68,-0.14 1.3,0.74 1.12,-0.35 0.91,0.54 0.17,0.9 1.43,-1.49 0.05,-1.57 1.42,-1.26 -0.15,-0.95 -1.56,-1.35 0.45,-0.7 1.62,0.36 -1.2,-1.92 0.17,-0.68 z" 
-                className={`transition-colors duration-300 stroke-white stroke-[0.5] 
-                ${activeProvince === 'chainat' 
-                      ? 'fill-orange-400 drop-shadow-lg' // สีตอนคลิกซูม (เด่นสุด)
-                      : hasActiveLocations('chainat')
-                        ? 'fill-orange-200 hover:fill-orange-300' // สีปกติ (ถ้ามีข้อมูลตรงตัวกรอง)
-                        : 'fill-gray-200 opacity-60 hover:fill-gray-300' // สีเทาจางๆ (ถ้าไม่มีข้อมูลตรงกับตัวกรอง)
-                    }`}
-                />
-                <text x="180" y="375" fontSize="4" textAnchor="middle" 
-                className={`transition-opacity duration-300 pointer-events-none font-bold drop-shadow-md ${activeProvince ? 'opacity-0' : 'opacity-100'}`}>ชัยนาท</text>
-              </g>
+      {/* 📋 โซนรายชื่อและเครื่องมือกรอง (ฝั่งขวา) */}
+      {/* 👇 เพิ่มเงื่อนไข: มือถือโชว์ตอน mobileView === 'list', ส่วนคอม (lg) โชว์เสมอ (lg:flex) */}
+      <div className={`w-full lg:w-1/3 h-[calc(100vh-180px)] lg:h-full flex-col bg-gray-50 rounded-2xl border border-gray-200 overflow-hidden ${mobileView === 'list' ? 'flex' : 'hidden lg:flex'}`}>
+        {/* ส่วนหัวเครื่องมือกรอง (Sticky) */}
+        <div className="p-4 bg-white border-b border-gray-100 shrink-0">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-bold text-xl text-gray-800">กลุ่มขับเคลื่อน</h2>
+            <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-bold">{filteredLocations.length} แห่ง</span>
+          </div>
 
-              {/* 2. สุพรรณบุรี */}
-              <g onClick={() => handleProvinceClick('suphanburi')} className="cursor-pointer group">
-                <path id="suphanburi" 
-                onClick={() => handleProvinceClick('suphanburi')} 
-                onMouseEnter={() => setHoveredProvince('suphanburi')}
-                onMouseLeave={() => setHoveredProvince(null)}
-                d="m 131.02844,385.18255 0.01,-0.85 1.13,-0.53 0.39,-0.75 -0.76,-0.96 0.39,-1.14 1.27,-1.09 -0.06,-0.67 0.99,-0.08 2.08,2.3 3.62,-0.01 -0.15,0.81 0.76,2.36 1.1,1.35 0.44,-0.52 3.75,0.4 5.29,2.66 3.1,0.54 0.15,-2.13 -0.41,-0.58 0.49,-0.79 1.73,0.09 2.02,0.94 1.5,-0.45 0.26,0.3 0,0 0.41,1.01 2.9,0.06 1.93,1.24 2.29,0.5 1.73,-0.27 1.99,1.89 4.47,0.13 1.02,0.57 5.24,-1.07 0.26,-1.3 -0.64,-1.05 0.27,-0.58 4.87,1.03 1.53,2.32 4.49,-2.88 0,0 -0.38,1.05 -0.98,0.32 0.01,0.66 0.54,1.34 2.15,-0.08 -0.43,0.58 -0.58,-0.05 0.21,1 0.98,0.11 -0.52,0.66 0.08,2.12 -0.93,2.27 1.57,1.34 0,0 -0.33,0.71 -0.94,0.38 -0.19,2.35 0.69,1.76 -0.49,2.39 1.47,2.06 -2.4,2.97 1.02,2.05 -0.98,1.3 0.85,1.44 -0.11,1.13 1.28,1.07 0.83,1.64 1.01,0.12 0,0 -0.59,1.49 0.29,1.66 1.65,0.51 0.56,1.81 -0.95,1.39 0.02,3.97 -1.66,2.82 -0.04,5.18 0,0 -1.86,1.85 -4,1.09 -1.61,1.44 -12.82,0.75 -0.89,1.09 -1.54,0.34 -2.43,2.93 -1.74,0.89 0,0 -2.18,-0.43 -0.08,-1.02 -0.89,-0.4 -0.39,-0.94 -2.49,0.59 -1.41,-0.44 -0.27,-0.64 0.1,-2.56 1.05,-2.89 0.79,0.23 0.65,-1.19 1.14,0.59 1.38,-1.09 0.43,-1.47 0.63,0.17 0.19,-5.84 -0.63,-1.85 0.46,-0.82 -0.26,-3.17 0.46,-1.18 -0.56,-1.91 0.34,-4.4 -0.6,-2.9 0.66,-1.99 -1.61,-1.07 0.62,-1.61 1.73,-0.42 -0.71,-0.99 -0.26,-1.6 -1.48,-1.92 -0.06,-0.88 -1.35,-0.73 1.37,-1.33 0.04,-0.88 -0.94,-0.58 -1.75,0.3 -1.87,-0.47 -0.82,-1 -1.78,-0.67 -2.73,-2.1 -2.29,1.54 -2.39,-0.57 -0.75,0.44 -1.45,-1.24 -0.27,0.59 0.39,1.78 -0.62,1.45 0.82,1.13 -0.19,0.56 -2.39,1.38 -3.35,0.39 -0.22,-1.7 -1.64,-3.77 -1.18,-0.34 -2.08,1.03 -2.01,-0.43 -1.49,-1.41 -0.34,-0.96 -1.45,-0.47 -1.07,-1.43 -0.76,-1.88 2.31,-2.09 0.35,-2.18 -0.71,-0.96 0.65,-0.86 -1.16,-2.27 z" className={`transition-colors duration-300 stroke-white stroke-[0.5] 
-                ${activeProvince === 'suphanburi' 
-                ? 'fill-green-400 drop-shadow-lg' // สีตอนคลิกซูม (เด่นสุด)
-                      : hasActiveLocations('suphanburi')
-                        ? 'fill-green-200 hover:fill-green-300' // สีปกติ (ถ้ามีข้อมูลตรงตัวกรอง)
-                        : 'fill-gray-200 opacity-60 hover:fill-gray-300' // สีเทาจางๆ (ถ้าไม่มีข้อมูลตรงกับตัวกรอง)
-                    }`} />
-                <text x="180" y="415" fontSize="4" textAnchor="middle" 
-                className={`transition-opacity duration-300 pointer-events-none font-bold drop-shadow-md ${activeProvince ? 'opacity-0' : 'opacity-100'}`}>สุพรรณบุรี</text>
-              </g>
+          {/* 1. ค้นหาชื่อ */}
+          <input 
+            type="text" 
+            placeholder="🔍 ค้นหาชื่อสถานที่..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 mb-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
 
-              {/* 3. นครปฐม */}
-              <g onClick={() => handleProvinceClick('nakhonpathom')} className="cursor-pointer group">
-                <path id="nakhonpathom" 
-                onClick={() => handleProvinceClick('nakhonpathom')} 
-                onMouseEnter={() => setHoveredProvince('nakhonpathom')}
-                onMouseLeave={() => setHoveredProvince(null)}
-                d="m 195.58844,439.50255 0.29,2.46 2.52,0.29 -0.28,3.08 0,0 -0.97,8.03 0.69,0.52 -0.37,0.96 1.87,1.69 -2.27,2.89 0.88,0.73 2.82,6.08 0,0 0.67,1.54 0.14,4.58 0,0 -0.72,0.87 -2.31,0.7 -0.21,1.21 -1.19,0.81 -0.39,-0.22 -2.28,1.04 -0.71,-1.22 -2,0.49 -0.35,-0.62 -0.39,0.53 -0.63,-0.47 -2.13,0.46 -2.02,2.23 -2.52,-0.09 0,0 -0.49,-0.12 0.51,-2.99 -2.16,0.28 -0.61,-0.73 0.11,-3.53 -1.84,1.16 -3.17,0.32 -0.68,-0.81 -0.19,-1.13 0.74,-0.79 0.39,-1.68 0.9,-0.32 -0.03,-0.64 -0.48,-0.21 -0.36,-1.58 -1.04,0.38 -0.55,-0.9 -1.55,-0.27 -0.62,0.42 0.73,-2.15 -1.03,-2.1 1.22,-0.23 0.75,-2.13 -3.31,-0.84 0,0 -0.52,-0.97 -1.08,-0.52 -0.57,-1.89 -1.02,-0.09 1.6,-2.95 -0.68,-1.18 0,0 1.74,-0.89 2.43,-2.93 1.54,-0.34 0.89,-1.09 12.82,-0.75 1.61,-1.44 4,-1.09 z" className={`transition-colors duration-300 stroke-white stroke-[0.5] 
-                ${activeProvince === 'nakhonpathom' 
-                ? 'fill-yellow-500 drop-shadow-lg' 
-                : hasActiveLocations('nakhonpathom')
-                 ? 'fill-yellow-200 hover:fill-yellow-400'
-                 : 'fill-gray-200 opacity-60 hover:fill-gray-300'
-                  }`} />
-                <text x="185" y="460" fontSize="4" textAnchor="middle" 
-                className={`transition-opacity duration-300 pointer-events-none font-bold drop-shadow-md ${activeProvince ? 'opacity-0' : 'opacity-100'}`}>นครปฐม</text>
-              </g>
+          {/* 2. กรองจังหวัด (Dropdown) */}
+          <select 
+            value={activeProvince}
+            onChange={(e) => setActiveProvince(e.target.value)}
+            className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 mb-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">ทุกจังหวัด (ภาพรวม)</option>
+            <option value="chainat">ชัยนาท</option>
+            <option value="suphanburi">สุพรรณบุรี</option>
+            <option value="nakhonpathom">นครปฐม</option>
+            <option value="nonthaburi">นนทบุรี</option>
+          </select>
 
-              {/* 4. นนทบุรี */}
-              <g onClick={() => handleProvinceClick('nonthaburi')} className="cursor-pointer group">
-                <path id="nonthaburi" 
-                onClick={() => handleProvinceClick('nonthaburi')} 
-                onMouseEnter={() => setHoveredProvince('nonthaburi')}
-                onMouseLeave={() => setHoveredProvince(null)}
-                d="m 202.47844,446.04255 -0.84,4.15 2.08,4.32 4.53,0.73 1.64,1.02 0.6,-0.32 2.51,2.39 2.11,-0.56 0.59,-0.75 1.59,0.44 0,0 -1.35,6.88 -2.35,1.71 -0.13,0.52 0.58,0.31 -1.01,0.87 -2.05,0.77 -0.75,-0.59 -8.74,-0.44 -0.72,-1.26 0,0 -2.82,-6.08 -0.88,-0.73 2.27,-2.89 -1.87,-1.69 0.37,-0.96 -0.69,-0.52 0.97,-8.03 0,0 1.44,-1.01 2.31,0 z" className={`transition-colors duration-300 stroke-white stroke-[0.5] 
-                ${activeProvince === 'nonthaburi' 
-                ? 'fill-purple-500 drop-shadow-lg' 
-                : hasActiveLocations('nonthaburi')
-                 ? 'fill-purple-200 hover:fill-purple-400'
-                 : 'fill-gray-200 opacity-60 hover:fill-gray-300'
-                  }`} />
-                <text x="208" y="463" fontSize="4" textAnchor="middle" 
-                className={`transition-opacity duration-300 pointer-events-none font-bold drop-shadow-md ${activeProvince ? 'opacity-0' : 'opacity-100'}`}>นนทบุรี</text>
-              </g>
-
-            </svg>
-            {/* 👇 วาดหมุด (Pins) เฉพาะจังหวัดที่ถูกเลือก (activeProvince) 👇 */}
-              {activeProvince && zoomConfig[activeProvince] && filteredLocations
-                .filter(loc => loc.province === activeProvince)
-                .map((loc, index) => {
-                  const config = zoomConfig[activeProvince];
-                  
-                  // 👇 1. เลือกว่าสถานที่นี้จะได้ไปอยู่ Anchor ย่อยตัวไหน (ใช้การสลับตาม index)
-                  const anchorIndex = index % config.anchors.length;
-                  const targetAnchor = config.anchors[anchorIndex];
-
-                  // 👇 2. หาตำแหน่งกระจายตัวจาก Anchor ย่อยนั้นๆ
-                  // ใช้ Math.floor เพื่อให้หมุดที่อยู่ Anchor เดียวกัน ขยับตัวออกห่างกัน
-                  const pos = getScatteredPosition(
-                    targetAnchor.x, 
-                    targetAnchor.y, 
-                    Math.floor(index / config.anchors.length), 
-                    config.spreadX,
-                    config.spreadY
-                  );
-                  
-                  const inverseScale = 1 / config.scale;
-
-                  return (
-                    // ⚠️ จุดที่ 1: ลบ bg-red-500, rounded-full, border ออกให้หมด 
-                    // ให้เหลือแค่ตำแหน่งและการชี้เมาส์
-                    <div 
-                      key={loc.id || index}
-                      onClick={(e) => {
-                         e.stopPropagation(); 
-                         setSelectedLocation(loc); 
-                      }}
-                      className={`absolute cursor-pointer z-10 flex justify-center group ${hoveredLocName === loc.name ? 'z-[100]' : 'hover:z-[100]'}`}
-                      style={{
-                        left: `${pos.x}%`,
-                        top: `${pos.y}%`,
-                        transform: `translate(-50%, -50%) scale(${inverseScale})` 
-                      }}
-                    >
-                       {/* ⚠️ จุดที่ 2: ใส่ไอคอน 📍 ลงไปตรงนี้แทน และตั้งให้ขยายใหญ่ขึ้นตอนเอาเมาส์ชี้ */}
-                       <span className={`text-2xl drop-shadow-md transition-transform duration-200 origin-bottom 
-                         ${hoveredLocName === loc.name ? 'scale-125 -translate-y-2' : 'group-hover:scale-125'}`}>
-                         📍
-                       </span>
-
-                       {/* ป๊อปอัปชื่อสถานที่ตอนเอาเมาส์ชี้หมุด (เหมือนเดิม) */}
-                       <div className={`absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-gray-900/90 backdrop-blur text-white text-sm px-2.5 py-1.5 rounded-lg shadow-xl whitespace-nowrap pointer-events-none transition-opacity font-medium
-                         ${hoveredLocName === loc.name ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                         {loc.name}
-                       </div>
-                    </div>
-                  );
-              })}
+          {/* 3. กรองประเภท (Pills) */}
+          <div className="flex flex-wrap gap-2">
+            {[
+              { id: 'all', label: 'ทั้งหมด' },
+              { id: 'upstream', label: 'ต้นน้ำ' },
+              { id: 'midstream', label: 'กลางน้ำ' },
+              { id: 'downstream', label: 'ปลายน้ำ' },
+              { id: 'partner', label: 'ภาคี' },
+            ].map(stage => (
+              <button 
+                key={stage.id}
+                onClick={() => setActiveStage(stage.id)}
+                className={`px-3 py-1 rounded-full text-xs font-semibold border transition ${activeStage === stage.id ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
+              >
+                {stage.label}
+              </button>
+            ))}
           </div>
         </div>
-        {activeProvince && (
-          // <div className="mt-4 text-center absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
-           <button 
-             onClick={() => setActiveProvince(null)}
-             className="absolute top-4 right-3 bg-white px-3 py-1 rounded-full shadow text-xs md:text-sm hover:bg-gray-100"
-           >
-             แสดงทั้งหมด
-           </button>
-          //  </div>
+
+        {/* รายชื่อสถานที่ (Scroll ได้) */}
+        <div className="flex-1 overflow-y-auto p-4 hide-scrollbar">
+          <div className="flex flex-col gap-3">
+            {filteredLocations.length > 0 ? (
+              filteredLocations.map(loc => (
+                <div 
+                  key={loc.id || loc.slug}
+                  onClick={() => handlePlaceSelect(loc)}
+                  className={`p-4 bg-white rounded-xl shadow-sm border cursor-pointer hover:border-green-500 transition-all ${selectedPlace?.slug === loc.slug ? 'border-green-500 ring-1 ring-green-500 bg-green-50/10' : 'border-gray-200'}`}
+                >
+                  <h4 className="font-bold text-gray-800 text-sm mb-1">{loc.name}</h4>
+                  <p className="text-xs text-gray-500">จ.{getProvinceThai(loc.province)}</p>
+                </div>
+              ))
+            ) : (
+              <div className="text-center text-gray-400 py-10 text-sm">ไม่พบสถานที่ที่ค้นหา</div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* 👇 ปุ่ม Toggle ด้านล่างสุด แสดงเฉพาะบนมือถือ (lg:hidden) 👇 */}
+      <div className="fixed bottom-0 left-0 w-full z-[1000] lg:hidden">
+        {mobileView === 'map' ? (
+          <button 
+            onClick={() => {
+              setMobileView('list');
+              setActiveProvinceSlug(null); // 👈 เพิ่มบรรทัดนี้: ปิด Toast เครือข่ายทิ้งทันที
+              setShowNetworkModal(false); // 👈 เพิ่มบรรทัดนี้: ปิด Modal เครือข่ายทิ้งทันที
+            }}
+            className="w-full bg-[#5A5A5A] hover:bg-gray-700 text-white py-4 font-medium text-lg shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] transition-colors flex items-center justify-center gap-2"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+            แสดงรายชื่อ
+          </button>
+        ) : (
+          <button 
+            onClick={() => setMobileView('map')}
+            className="w-full bg-[#5A5A5A] hover:bg-gray-700 text-white py-4 font-medium text-lg shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] transition-colors flex items-center justify-center gap-2"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon><line x1="9" y1="3" x2="9" y2="18"></line><line x1="15" y1="6" x2="15" y2="21"></line></svg>
+            แสดงแผนที่
+          </button>
         )}
       </div>
 
-      {/* --- ส่วนรายชื่อและเครือข่าย (ฝั่งขวา) --- */}
-      <div className="w-full lg:w-1/2 bg-white p-2 md:p-4 rounded-2xl shadow-sm border border-gray-100 overflow-y-auto max-h-[850px] hover-scrollbar scrollbar-thin scrollbar-thumb-gray-300">
-   
-
-          {/* 👇 ส่วนแสดงข้อมูลเครือข่ายระดับจังหวัด (เปลี่ยนเป็น Accordion ยุบรวม) 👇 */}
-          {activeProvince && allNetworks && (
-            <div className="mb-8">
-
-              {(() => {
-                // ดึงข้อมูลเครือข่ายทั้งหมดที่อยู่ในจังหวัดที่กำลังเลือก
-                const currentProvinceNetworks = allNetworks.filter(net => net.province === activeProvince);
-                
-                if (currentProvinceNetworks.length === 0) return <div className="text-sm text-gray-500">ไม่มีข้อมูลเครือข่ายในพื้นที่นี้</div>;
-
-                return (
-                  <div className={`bg-blue-50 rounded-xl border transition-all duration-300 overflow-hidden ${isProvinceInfoExpanded ? 'border-blue-300 shadow-md ring-1 ring-blue-300' : 'border-blue-100 shadow-sm hover:border-blue-300'}`}>
-                    
-                    {/* 📌 ส่วนหัว Accordion (คลิกเพื่อกาง/หด) */}
-                    <div 
-                      onClick={() => setIsProvinceInfoExpanded(!isProvinceInfoExpanded)}
-                      className="p-3 cursor-pointer flex justify-between items-center group"
-                    >
-                      <div className="flex items-center gap-3">
-                       
-                        <h1 className="text-sm md:text-md lg:text-xl font-extrabold text-gray-900">
-            ระบบเครือข่ายอาหาร{activeProvince ? ` จ.${getProvinceLabel(activeProvince)}` : 'ปลอดภัย'}
-          </h1>
-                      </div>
-                      
-                      {/* ไอคอนลูกศร */}
-                      <svg 
-                        className={`w-5 h-5 text-blue-500 transition-transform duration-300 ${isProvinceInfoExpanded ? 'rotate-180' : ''}`} 
-                        fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
-
-                    {/* 📌 ส่วนเนื้อหา (รวมทุกเครือข่ายมาต่อกัน) */}
-                    <div className={`grid transition-all duration-300 ease-in-out ${isProvinceInfoExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
-                      <div className="overflow-hidden">
-                        <div className="p-4 pt-0 border-t border-blue-100 text-sm text-gray-700 bg-white/60">
-                          
-                          {/* วนลูปนำข้อมูลเครือข่ายทั้งหมดมาเรียงต่อกัน */}
-                          {currentProvinceNetworks.map((net, idx) => (
-                            <div key={idx} className={idx > 0 ? "pt-8 mt-6 border-t-2 border-gray-100" : "pt-4 pb-2"}>
-                              
-                              {/* 1. ภาพหน้าปก (ถ้ามี) */}
-                              {net.imageUrl && (
-                                <div className="w-full h-48 md:h-64 overflow-hidden rounded-xl mb-6 shadow-sm">
-                                  <img src={net.imageUrl} alt={net.name} className="w-full h-full object-cover" />
-                                </div>
-                              )}
-
-                              {/* 2. ชื่อเครือข่ายและ Tag */}
-                              {/* <h5 className="text-2xl font-extrabold text-blue-900 mb-3">{net.name}</h5>
-                              <div className="flex flex-wrap items-center gap-2 mb-6">
-                                <span className="bg-blue-100 text-blue-800 px-3 py-1.5 rounded-full text-xs font-bold">
-                                  เครือข่ายระดับจังหวัด
-                                </span>
-                                <span className="text-gray-400">•</span>
-                               
-                                <span className="text-gray-600 font-medium text-sm">
-                                  {getProvinceLabel(activeProvince)} 
-                                </span>
-                              </div> */}
-
-                              {/* 3. เนื้อหาข้อมูล/องค์ความรู้ (ที่แปลงมาจาก Markdown) */}
-                              {net.contentHTML ? (
-                                <div 
-                                  // ใช้คลาส prose ของ Tailwind เพื่อให้ HTML ที่ render ออกมาสวยงาม
-                                  className="prose prose-sm md:prose-base prose-blue max-w-none text-gray-700 leading-relaxed"
-                                  dangerouslySetInnerHTML={{ __html: net.contentHTML }} 
-                                />
-                              ) : (
-                                <p className="text-gray-400 italic">ไม่มีข้อมูลเพิ่มเติม</p>
-                              )}
-
-                              {/* 4. ส่วนข้อมูลยุทธศาสตร์ (คอมเมนต์ไว้เหมือนในต้นฉบับ เผื่ออนาคตอยากเปิดใช้) */}
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
-                                {[
-                                  { title: "ภาคียุทธศาสตร์นโยบายระดับท้องถิ่น", content: net.strategicPartners },
-                                  { title: "นโยบายระดับท้องถิ่น", content: net.localPolicies },
-                                  { title: "ภาคียุทธศาสตร์นโยบายระดับชาติ", content: net.nationalPartnerPolicies },
-                                  { title: "ภาคียุทธศาสตร์ระดับชาติ", content: net.nationalPartners },
-                                ].map((section, index) => (
-                                  section.content && (
-                                    <div key={index} className="bg-gray-50 p-5 rounded-xl border border-gray-200">
-                                      <h4 className="text-md font-bold text-gray-800 mb-2 border-b border-gray-200 pb-2">
-                                        {section.title}
-                                      </h4>
-                                      <p className="text-gray-700 text-sm whitespace-pre-line leading-relaxed">
-                                        {section.content}
-                                      </p>
-                                    </div>
-                                  )
-                                ))}
-                              </div>
-
-                            </div>
-                          ))}
-
-                        </div>
-                      </div>
-                    </div>
-                    
-                  </div>
-                );
-              })()}
-            </div>
-          )}
-
-        {/* ส่วนแสดงรายชื่อกลุ่ม/สถานที่ */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
-          <div className="flex items-center gap-3">
-            <h3 className="text-sm md:text-xl font-bold text-gray-800">กลุ่มขับเคลื่อน</h3>
-            
-            {/* กล่องแสดงตัวเลข (Badge) */}
-            <span className="bg-blue-100 text-blue-800 text-xs md:text-sm font-semibold px-3 py-1 rounded-full">
-              {filteredLocations?.length || 0} แห่ง
-            </span>
-          </div>
-          <input
-            type="text"
-            placeholder="🔍  ค้นหาชื่อสถานที่..."
-            className="w-full sm:w-64 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50 focus:bg-white transition"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <div className="flex flex-wrap gap-1 md:gap-2 mb-4">
-          <button
-            onClick={() => setActiveStage(null)}
-            className={`px-2 py-1.5 md:px-3 rounded-full text-xs font-semibold transition-colors border ${!activeStage ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
-          >
-            ทั้งหมด
-          </button>
-          <button
-            onClick={() => setActiveStage('upstream')}
-            className={`px-2 py-1.5 md:px-3 rounded-full text-xs font-semibold transition-colors border ${activeStage === 'upstream' ? 'bg-teal-600 text-white border-teal-600' : 'bg-teal-50 text-teal-700 border-teal-200 hover:bg-teal-100'}`}
-          >
-            ต้นน้ำ
-          </button>
-          <button
-            onClick={() => setActiveStage('midstream')}
-            className={`px-2 py-1.5 md:px-3 rounded-full text-xs font-semibold transition-colors border ${activeStage === 'midstream' ? 'bg-amber-500 text-white border-amber-500' : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'}`}
-          >
-            กลางน้ำ
-          </button>
-          <button
-            onClick={() => setActiveStage('downstream')}
-            className={`px-2 py-1.5 md:px-3 rounded-full text-xs font-semibold transition-colors border ${activeStage === 'downstream' ? 'bg-rose-500 text-white border-rose-500' : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'}`}
-          >
-            ปลายน้ำ
-          </button>
-          <button
-            onClick={() => setActiveStage('partner')}
-            className={`px-2 py-1.5 md:px-3 rounded-full text-xs font-semibold transition-colors border ${activeStage === 'partner' ? 'bg-indigo-500 text-white border-indigo-500' : 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'}`}
-          >
-            ภาคี
-          </button>
-        </div>
-        <div className="space-y-3">
-          {filteredLocations?.length > 0 ? (
-            filteredLocations.map((loc, index) => (
-              <div
-                    key={index}
-                    // 👇 1. เมื่อเอาเมาส์ชี้การ์ด ให้ส่งชื่อไปบอกหมุดบนแผนที่
-                    onMouseEnter={() => setHoveredLocName(loc.name)}
-                    onMouseLeave={() => setHoveredLocName(null)}
-                    // 👇 2. เมื่อคลิกที่การ์ด ก็เปิด Modal ได้เหมือนกัน
-                    onClick={() => setSelectedLocation(loc)}
-                  >
-              <button 
-                key={loc.slug || `loc-${index}`} 
-                className="w-full p-2 md:p-3 bg-white border border-gray-100 rounded-xl hover:border-gray-200 hover:bg-gray-50 transition shadow-sm text-left flex justify-between items-center cursor-pointer"
-                onClick={() => setSelectedLocation(loc)} 
-              >
-                <div>
-                  <span className="block font-semibold text-gray-800 text-xs md:text-base">{loc.name}</span>
-                  {!activeProvince && <span className="block text-[8pt] md:text-xs text-gray-500">{getProvinceLabel(loc.province)}</span>}
-                </div>
-              </button>
-              </div>
-            ))
-          ) : (
-            <p className="text-gray-400 text-sm italic">ไม่มีสถานที่ข้อมูลสถานที่ในจังหวัดนี้</p>
-          )}
-        </div>
-      </div>
-
-      {/* Rendering Modals */}
-      {/* <NetworkModal 
-        networkData={selectedNetwork} 
-        onClose={closeModals} 
-      /> */}
-
-      <LocationModal 
-        locationData={selectedLocation} 
-        onClose={closeModals} 
-        onNetworkClick={(netData) => { 
-          setSelectedLocation(null); 
-          setSelectedNetwork(netData); 
-        }}
-      />
+      {/* Modal สถานที่ */}
+      {modalLocation && <LocationModal locationData={modalLocation} onClose={() => setModalLocation(null)} />}
+      
+      {/* 👇 แก้ไข Modal เครือข่ายตรงนี้ ส่ง networkData เข้าไปให้ตรงชื่อ 👇 */}
+      {showNetworkModal && currentNetworkData && (
+        <NetworkModal 
+          networkData={currentNetworkData} 
+          provinceName={getProvinceThai(activeProvinceSlug)}
+          onClose={() => setShowNetworkModal(false)} 
+        />
+      )}
+    </div>
     </div>
   );
 }

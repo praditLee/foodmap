@@ -294,10 +294,10 @@ export default function LocationModal({ locationData, onClose, onNetworkClick })
             </div>
           )}
 
-          {/* ปุ่ม Google Maps แก้ไขให้เป็น URL ที่ถูกต้อง */}
-          {locationData.coordinates && locationData.coordinates.lat && locationData.coordinates.lng && (
+          {/* ปุ่ม Google Maps แก้ไข URL ให้ถูกต้อง และดึงพิกัดแบบครอบคลุม */}
+          {(locationData.lat || locationData?.coordinates?.lat) && (locationData.lng || locationData?.coordinates?.lng) && (
             <a 
-              href={`https://www.google.com/maps/search/?api=1&query=${locationData.coordinates.lat},${locationData.coordinates.lng}`}
+              href={`https://www.google.com/maps/dir/?api=1&destination=${locationData.lat || locationData.coordinates.lat},${locationData.lng || locationData.coordinates.lng}`}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-2 mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors w-fit"
