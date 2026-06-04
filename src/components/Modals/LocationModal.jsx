@@ -38,8 +38,8 @@ const getStandardTag = (std) => {
 // ฟังก์ชันช่วยเหลือสำหรับกำหนดสไตล์ของประเภทห่วงโซ่
 const getSupplyChainTag = (stage) => {
   const stageMap = {
-    upstream: { label: 'ต้นน้ำ (การผลิต)', color: 'bg-teal-50 text-teal-700' },
-    midstream: { label: 'กลางน้ำ (ตลาด/แปรรูป)', color: 'bg-amber-50 text-amber-700' },
+    upstream: { label: 'ผู้ผลิต', color: 'bg-teal-50 text-teal-700' },
+    midstream: { label: 'ตลาดเขียว', color: 'bg-green-50 text-green-700' },
     downstream: { label: 'ปลายน้ำ (ผู้บริโภค)', color: 'bg-rose-50 text-rose-700' },
     partner: { label: 'หน่วยงานภาคี', color: 'bg-indigo-50 text-indigo-700' },
   };
@@ -91,7 +91,7 @@ export default function LocationModal({ locationData, onClose, onNetworkClick })
         </button>
 
         {/* แกลเลอรีรูปภาพ */}
-        <div className="w-full h-60 overflow-hidden bg-gray-200">
+        <div className="w-full h-80 overflow-hidden bg-gray-200">
           {locationData.images && locationData.images.length > 0 ? (
              <ImageGallery images={locationData.images} />
           ) : (
@@ -148,8 +148,8 @@ export default function LocationModal({ locationData, onClose, onNetworkClick })
 
           {/* ข้อมูลทั่วไป (Markdown) */}
           {locationData.contentHTML && (
-            <div className="mb-8 border-b border-gray-100 pb-8 prose prose-blue prose-sm max-w-none">
-              <h3 className="text-lg font-bold text-gray-800 mb-3">ข้อมูลการดำเนินงาน</h3>
+            <div className="top-12 mb-8 border-b border-gray-100 pb-8 prose prose-blue prose-sm max-w-none">
+              <h3 className="text-md font-bold text-gray-800 mb-3">ข้อมูลการดำเนินงาน</h3>
               <div dangerouslySetInnerHTML={{ __html: locationData.contentHTML }} />
             </div>
           )}
@@ -283,6 +283,22 @@ export default function LocationModal({ locationData, onClose, onNetworkClick })
                           className="flex items-center gap-1 text-sm bg-green-50 hover:bg-green-100 text-green-700 px-3 py-1.5 rounded-md transition"
                         >
                           คัดลอก ID
+                        </button>
+                      </div>
+                    );
+                  }
+                   if (contact.type === 'address') {
+                    return (
+                      <div key={idx} className="flex items-center justify-between bg-white p-3 rounded-lg border border-green-200 shadow-sm">
+                        <div className="flex flex-col">
+                          <span className="text-xs text-green-600 font-semibold uppercase tracking-wide">{contact.label || 'ที่อยู่'}</span>
+                          <span className="text-gray-900 font-medium">{contact.value}</span>
+                        </div>
+                        <button 
+                          onClick={() => handleCopy(contact.value)}
+                          className="flex items-center gap-1 text-sm bg-green-50 hover:bg-green-100 text-green-700 px-3 py-1.5 rounded-md transition"
+                        >
+                          คัดลอกที่อยู่
                         </button>
                       </div>
                     );

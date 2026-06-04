@@ -59,7 +59,7 @@ export default config({
       slugField: 'slug',
       path: 'src/content/locations/*',
       format: { contentField: 'content' },
-      entryLayout: 'content',
+      // entryLayout: 'content',
       columns: ['name', 'province'], // โชว์ชื่อภาษาไทย และ โชว์จังหวัด
       schema: {
        name: fields.text({ 
@@ -72,11 +72,11 @@ export default config({
           description: 'เช่น klong-ree-farm, wat-sanam-chai (ห้ามซ้ำกัน)'
         }),
         // 👇 เพิ่ม Field Relationship ตรงนี้
-        network: fields.relationship({
-          label: 'สังกัดเครือข่าย',
-          collection: 'networks',
-          description: 'เลือกเครือข่ายที่สถานที่นี้สังกัด (ถ้ามี)'
-        }),
+        // network: fields.relationship({
+        //   label: 'สังกัดเครือข่าย',
+        //   collection: 'networks',
+        //   description: 'เลือกเครือข่ายที่สถานที่นี้สังกัด (ถ้ามี)'
+        // }),
 
         // ใช้เก็บ "ข้อมูล" และ "กิจกรรม/การดำเนินงาน" รวมกันในนี้ได้เลย
         content: fields.document({
@@ -84,13 +84,16 @@ export default config({
           formatting: true,
           dividers: true,
           links: true,
-          images: true,
+          images: {
+            directory: 'public/images/document-content', // โฟลเดอร์ที่รูปจะไปอยู่ตอนเรากดเซฟ
+            publicPath: '/images/document-content'       // Path ที่หน้าเว็บจะใช้อ้างอิงเพื่อดึงรูปมาโชว์
+          },
         }),
 
         // --- พิกัดและที่ตั้ง ---
         coordinates: fields.object({
-          lat: fields.number({ label: 'Latitude' }),
-          lng: fields.number({ label: 'Longitude' }),
+          lat: fields.text({ label: 'Latitude' }),
+          lng: fields.text({ label: 'Longitude' }),
         }),
         province: fields.select({
           label: 'จังหวัด',
@@ -106,9 +109,9 @@ export default config({
         supplyChainStage: fields.select({
           label: 'ประเภท (จุดในห่วงโซ่)',
           options: [
-            { label: 'ต้นน้ำ (การผลิต)', value: 'upstream' },
-            { label: 'กลางน้ำ (ตลาด/แปรรูป)', value: 'midstream' },
-            { label: 'ปลายน้ำ (ผู้บริโภค/โรงเรียน)', value: 'downstream' },
+            { label: 'ผู้ผลิต', value: 'upstream' },
+            { label: 'ตลาดเขียว', value: 'midstream' },
+            // { label: 'ปลายน้ำ (ผู้บริโภค/โรงเรียน)', value: 'downstream' },
             { label: 'หน่วยงานภาคี', value: 'partner' },
           ],
           defaultValue: 'upstream',
@@ -150,14 +153,15 @@ export default config({
             type: fields.select({
               label: 'ประเภทการติดต่อ',
               options: [
+                { label: 'ที่อยู่', value: 'address' },
                 { label: 'เบอร์โทรศัพท์', value: 'phone' },
                 { label: 'Facebook / เว็บไซต์', value: 'link' },
                 { label: 'Line ID', value: 'line' },
               ],
-              defaultValue: 'phone',
+              defaultValue: 'address',
             }),
             label: fields.text({ label: 'ชื่อแสดงผล (เช่น เบอร์คุณเอ, แฟนเพจกลุ่ม)' }),
-            value: fields.text({ label: 'ข้อมูล (ใส่เบอร์โทรติดกัน หรือ ใส่ URL เต็มๆ ที่มี https://)' }),
+            value: fields.text({ label: 'ข้อมูล (ใส่ที่อยู่, ใส่เบอร์โทรติดกัน หรือ ใส่ URL เต็มๆ ที่มี https://)' }),
           }),
           {
             label: 'ช่องทางการติดต่อ',

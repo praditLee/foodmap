@@ -48,6 +48,8 @@ function keystaticToHTML(nodes) {
           return `<a href="${node.href}" class="text-blue-600 underline" target="_blank">${childrenHTML}</a>`;
         case "divider":
           return `<hr class="my-4 border-gray-300" />`;
+        case "image":
+          return `<img src="${node.src}" alt="${node.alt || "รูปภาพประกอบ"}" class="w-full max-w-2xl mx-auto rounded-lg shadow-sm border border-gray-100 my-6 object-contain" />`;
         default:
           return childrenHTML;
       }

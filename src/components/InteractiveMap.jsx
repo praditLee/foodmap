@@ -99,10 +99,10 @@ function MapContent({ allLocations, allNetworks }) {
 
     // กำหนดพิกัดและระดับการซูมของแต่ละจังหวัด
     const provinceCamera = {
-      'chainat': { lat: 14.9500, lng: 100.0251, zoom: 9 }, // ปรับพิกัดชัยนาท
+      'chainat': { lat: 14.9500, lng: 100.0251, zoom: 9.8 }, // ปรับพิกัดชัยนาท
       'suphanburi': { lat: 14.3000, lng: 99.8817, zoom: 8.8 }, // ปรับพิกัดสุพรรณบุรี
       'nakhonpathom': { lat: 13.7000, lng: 100.0371, zoom: 9.5 }, // ปรับพิกัดนครปฐม
-      'nonthaburi': { lat: 13.8000, lng: 100.4500, zoom: 10.2 } // ปรับพิกัดนนทบุรี
+      'nonthaburi': { lat: 13.8500, lng: 100.3800, zoom: 10.2 } // ปรับพิกัดนนทบุรี
     };
 
     const clickListener = featureLayer.addListener('click', (e) => {
@@ -137,6 +137,34 @@ function MapContent({ allLocations, allNetworks }) {
       clickListener.remove();
     };
   }, [map]);
+
+  // 🔗 ดักจับ URL Parameter เพื่อเปิด Modal ทันทีเมื่อคลิกลิงก์แชร์มา
+  useEffect(() => {
+    // 1. อ่านค่า URL ปัจจุบัน
+    const urlParams = new URLSearchParams(window.location.search);
+    const sharedLocSlug = urlParams.get('loc');
+
+    if (sharedLocSlug && allLocations && allLocations.length > 0) {
+      // 2. ค้นหาสถานที่ที่ตรงกับ slug ที่ได้จากลิงก์
+      const sharedPlace = allLocations.find(loc => loc.slug === sharedLocSlug);
+
+      if (sharedPlace) {
+        // 3. ถ้าเจอ ให้ตั้งค่า State เพื่อเปิด Modal
+        setModalLocation(sharedPlace);
+
+        // 4. (ทางเลือก) สั่งให้แผนที่ซูมไปหาพิกัดนั้นด้วยเลย
+        const latVal = parseFloat(sharedPlace.lat || sharedPlace?.coordinates?.lat);
+        const lngVal = parseFloat(sharedPlace.lng || sharedPlace?.coordinates?.lng);
+        if (map && !isNaN(latVal) && !isNaN(lngVal)) {
+          map.panTo({ lat: latVal, lng: lngVal });
+          map.setZoom(12);
+        }
+        
+        // 5. ปรับให้เปลี่ยนหน้าจอมือถือเป็น 'map' เพื่อให้แสดง Modal ซ้อนทับได้ถูกต้อง
+        setMobileView('map');
+      }
+    }
+  }, [allLocations, map]); // ให้ทำงานเมื่อข้อมูลสถานที่พร้อม หรือ แผนที่โหลดเสร็จ
 
   // 🎯 ฟังก์ชันสำหรับกดแล้วให้แผนที่วิ่งไปหาพิกัดสถานที่
   const handlePlaceSelect = (loc) => {
@@ -229,7 +257,6 @@ function MapContent({ allLocations, allNetworks }) {
       {/* 🗺️ โซนแผนที่ (ฝั่งซ้าย) */}
       <div className={`w-full lg:w-2/3 h-[calc(100vh-180px)] lg:h-full rounded-2xl overflow-hidden shadow-md border border-gray-200 relative ${mobileView === 'map' ? 'block' : 'hidden lg:block'}`}>
 
-
         {/* ปุ่มดูภาพรวมเดิม */}
         <button 
           onClick={handleResetView}
@@ -269,16 +296,75 @@ function MapContent({ allLocations, allNetworks }) {
 
           {selectedPlace && (
             <InfoWindow
-              position={{ lat: parseFloat(selectedPlace.lat || selectedPlace?.coordinates?.lat), lng: parseFloat(selectedPlace.lng || selectedPlace?.coordinates?.lng) }}
+              position={{ 
+                lat: parseFloat(selectedPlace.lat || selectedPlace?.coordinates?.lat), 
+                lng: parseFloat(selectedPlace.lng || selectedPlace?.coordinates?.lng) 
+              }}
               pixelOffset={[0, -40]} 
-              onCloseClick={() => setSelectedPlace(null)}
+              // 👇 1. ท่าไม้ตาย: สั่งปิด Header และปุ่ม X ของ Google ทิ้งไปเลย!
+              headerDisabled={true} 
             >
-              <div className="p-1 max-w-[250px]">
-                {selectedPlace.imageUrl && <img src={selectedPlace.imageUrl} alt={selectedPlace.name} className="w-full h-32 object-cover rounded-lg mb-3" />}
-                <h3 className="font-bold text-lg text-gray-800 mb-1 leading-tight">{selectedPlace.name}</h3>
-                <p className="text-xs text-gray-600 mb-3">จ.{getProvinceThai(selectedPlace.province)}</p>
-                <div className="flex flex-col gap-2">
-                  <button onClick={() => setModalLocation(selectedPlace)} className="bg-gray-800 text-white text-xs py-2 rounded font-medium hover:bg-gray-900 w-full transition-colors">ดูรายละเอียด</button>
+              {/* เปลี่ยนเป็นกล่องที่ไม่มีกรอบ และให้ซ่อนสิ่งที่ล้นออกไป (overflow-hidden) */}
+              <div className="w-[260px] flex flex-col relative bg-white rounded-xl overflow-hidden">
+                
+                {/* 👇 2. สร้างปุ่ม X ของเราเอง ลอยทับอยู่บนมุมขวาของรูปภาพ */}
+                <button 
+                  onClick={() => setSelectedPlace(null)}
+                  className="absolute top-2 right-2 z-50 bg-white/90 text-gray-800 p-1.5 rounded-full hover:bg-red-50 hover:text-red-600 shadow-md transition flex items-center justify-center cursor-pointer"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6L18 18" />
+                  </svg>
+                </button>
+
+                {/* 🖼️ โซนรูปภาพ (ตอนนี้จะดันขึ้นไปชนขอบบน 100% แล้ว) */}
+                {selectedPlace.images?.[0] && (
+                  <img 
+                    src={selectedPlace.images[0]} 
+                    alt={selectedPlace.name} 
+                    className="w-full h-40 object-cover shrink-0 m-0 block" 
+                  />
+                )}
+
+                {/* 📝 โซนเนื้อหา */}
+                <div className="p-4 flex flex-col gap-2">
+                  <h3 className="font-bold text-[15px] text-[#1e293b] mb-1 leading-snug">
+                    {selectedPlace.name}
+                  </h3>
+                  
+                  {/* ที่อยู่ และ จังหวัด (ปรับเป็น items-start ตามที่คุณเขียนมา ถูกต้องแล้วครับ) */}
+                  {selectedPlace.contacts?.map((contact, idx) => {
+                    if (contact.type === 'address') {
+                      return (
+                        <p key={idx} className="text-sm text-gray-600 flex items-start gap-2">
+                          <span className="shrink-0 text-base">🏠</span> 
+                          <span>{contact.value} จ.{getProvinceThai(selectedPlace.province)}</span>
+                        </p>
+                      );
+                    }
+                    return null;
+                  })}
+
+                  {/* เบอร์โทรศัพท์ */}
+                  {selectedPlace.contacts?.map((contact, idx) => {
+                    if (contact.type === 'phone') {
+                      return (
+                        <p key={idx} className="text-sm text-gray-600 flex items-start gap-2">
+                          <span className="shrink-0 text-base">📞</span> 
+                          <span>{contact.value}</span>
+                        </p>
+                      );
+                    }
+                    return null;
+                  })}
+
+                  {/* ปุ่มดูรายละเอียด */}
+                  <button 
+                    onClick={() => setModalLocation(selectedPlace)} 
+                    className="mt-3 bg-[#1e293b] text-white text-[15px] py-2.5 rounded-lg font-medium hover:bg-gray-900 w-full transition-colors shadow-sm cursor-pointer"
+                  >
+                    ดูรายละเอียด
+                  </button>
                 </div>
               </div>
             </InfoWindow>
@@ -322,9 +408,9 @@ function MapContent({ allLocations, allNetworks }) {
           <div className="flex flex-wrap gap-2">
             {[
               { id: 'all', label: 'ทั้งหมด' },
-              { id: 'upstream', label: 'ต้นน้ำ' },
-              { id: 'midstream', label: 'กลางน้ำ' },
-              { id: 'downstream', label: 'ปลายน้ำ' },
+              { id: 'upstream', label: 'ผู้ผลิต' },
+              { id: 'midstream', label: 'ตลาดเขียว' },
+              // { id: 'downstream', label: 'ผู้บริโภค' },
               { id: 'partner', label: 'ภาคี' },
             ].map(stage => (
               <button 

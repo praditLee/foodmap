@@ -17,12 +17,12 @@ export default function ImageGallery({ images }) {
     <div className="mb-6">
     
       
-      <div className="relative w-full h-64 bg-gray-100 rounded-lg overflow-hidden group">
+      <div className="relative w-full h-84 bg-gray-100 rounded-lg overflow-hidden group">
         {/* โชว์รูปภาพปัจจุบัน */}
         <img 
           src={images[currentIndex]} 
           alt={`รูปภาพที่ ${currentIndex + 1}`} 
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover object-top"
         />
 
         {/* 2. ถ้ามีรูปมากกว่า 1 รูป ถึงจะโชว์ปุ่มลูกศร */}

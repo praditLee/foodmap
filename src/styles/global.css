@@ -69,3 +69,20 @@
   .hide-scrollbar::-webkit-scrollbar {
     display: none; /* สำหรับ Chrome, Safari, และ Opera */
   }
+
+/* =========================================
+   ปรับแต่ง Google Maps InfoWindow Custom UI
+========================================= */
+
+/* 1. ลบกรอบ Padding สีขาวรอบนอก และเพิ่มความโค้ง */
+.gm-style-iw-c {
+  padding: 0 !important;
+  border-radius: 12px !important;
+}
+
+/* 2. ลบ Padding ด้านในและซ่อน Scrollbar */
+.gm-style-iw-d {
+  overflow: hidden !important;
+  padding: 0 !important;
+}
+

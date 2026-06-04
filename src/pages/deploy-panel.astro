@@ -1,0 +1,113 @@
+---
+// src/pages/deploy-panel.astro
+import "../styles/global.css"; // อ้างอิงไฟล์ CSS ของ Tailwind (ปรับ path ให้ตรงกับโปรเจกต์คุณ)
+---
+
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ระบบควบคุมการอัปเดตเว็บไซต์ (Deploy Panel)</title>
+  </head>
+  <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <div
+      class="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-8 max-w-md w-full text-center border border-gray-100"
+    >
+      <div
+        class="bg-blue-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-8 w-8 text-blue-600"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+          ></path>
+        </svg>
+      </div>
+
+      <h1 class="text-2xl font-extrabold text-gray-900 mb-2">
+        อัปเดตข้อมูลเว็บไซต์
+      </h1>
+      <p class="text-gray-500 mb-8 text-sm leading-relaxed">
+        กดปุ่มด้านล่างเพื่อดึงข้อมูลล่าสุดจากระบบฐานข้อมูล (Keystatic) <br
+        />ไปแสดงผลบนหน้าเว็บไซต์จริง
+        <br /><span class="text-xs text-gray-400"
+          >(ใช้เวลาประมาณ 1-2 นาทีในการดำเนินการ)</span
+        >
+      </p>
+
+      <button
+        id="deploy-btn"
+        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-4 rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+      >
+        <span id="btn-text">🚀 สั่งอัปเดตเว็บไซต์ (Deploy Now)</span>
+      </button>
+
+      <div
+        id="status-message"
+        class="mt-5 text-sm font-medium hidden p-3 rounded-lg"
+      >
+      </div>
+
+      <div class="mt-8 pt-4 border-t border-gray-100">
+        <a href="/" class="text-sm text-gray-400 hover:text-gray-600 underline"
+          >กลับสู่หน้าหลัก</a
+        >
+      </div>
+    </div>
+
+    <script>
+      const deployBtn = document.getElementById("deploy-btn");
+      const btnText = document.getElementById("btn-text");
+      const statusMessage = document.getElementById("status-message");
+
+      // 🚨 สำคัญ: นำ URL ลับของ Cloudflare Deploy Hook มาใส่แทนที่ข้อความด้านล่างนี้ 🚨
+      const DEPLOY_HOOK_URL =
+        "https://api.cloudflare.com/client/v4/pages/webhooks/deploy_hooks/ใส่_URL_ลับของคุณตรงนี้";
+
+      if (deployBtn) {
+        deployBtn.addEventListener("click", async () => {
+          // 1. เปลี่ยนหน้าตาปุ่มเป็นโหมดกำลังโหลด ป้องกันคนกดซ้ำ
+          deployBtn.disabled = true;
+          deployBtn.classList.add("opacity-70", "cursor-not-allowed");
+          btnText.innerHTML = "⏳ กำลังส่งคำสั่ง...";
+          statusMessage.classList.add("hidden");
+
+          try {
+            // 2. ยิง HTTP POST Request ไปที่ Cloudflare
+            const response = await fetch(DEPLOY_HOOK_URL, { method: "POST" });
+
+            // 3. ตรวจสอบผลลัพธ์
+            if (response.ok) {
+              statusMessage.innerHTML =
+                "✅ <b>สั่งการสำเร็จ!</b><br/>ระบบกำลังสร้างหน้าเว็บใหม่ กรุณารอ 1-2 นาทีแล้วรีเฟรชหน้าเว็บหลักครับ";
+              statusMessage.className =
+                "mt-5 text-sm text-green-700 bg-green-50 border border-green-200 font-medium block p-3 rounded-lg text-center";
+            } else {
+              throw new Error("Network response was not ok");
+            }
+          } catch (error) {
+            statusMessage.innerHTML =
+              "❌ <b>เกิดข้อผิดพลาด</b><br/>ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ Cloudflare ได้ หรือ URL ไม่ถูกต้อง";
+            statusMessage.className =
+              "mt-5 text-sm text-red-700 bg-red-50 border border-red-200 font-medium block p-3 rounded-lg text-center";
+          } finally {
+            // 4. รีเซ็ตปุ่มกลับมาเป็นเหมือนเดิมหลังจากผ่านไป 5 วินาที
+            setTimeout(() => {
+              deployBtn.disabled = false;
+              deployBtn.classList.remove("opacity-70", "cursor-not-allowed");
+              btnText.innerHTML = "🚀 สั่งอัปเดตอีกครั้ง";
+            }, 5000);
+          }
+        });
+      }
+    </script>
+  </body>
+</html>
