@@ -92,16 +92,27 @@ const networkData = await Promise.all(
 
 const menuItems = [
   { label: "หน้าหลัก", href: "https://landactionthai.org" },
-  { label: "เกี่ยวกับเรา", href: "https://landactionthai.org/about-us" },
-  { label: "วิจัย", href: "https://landactionthai.org/research" },
-  { label: "นาเช่า", href: "#" },
-  { label: "สินค้า", href: "#" },
-  { label: "English", href: "#", isUppercase: true },
-  { label: "E-Book", href: "#", isUppercase: true },
-  { label: "สื่อรณรงค์", href: "#" },
-  { label: "สิทธิที่ดิน", href: "#" },
-  { label: "หนี้สินชาวนา", href: "#" },
-  { label: "ค้นหา", href: "#" },
+  { label: "เกี่ยวกับเรา", href: "https://landactionthai.org/aboutus.html" },
+  { label: "วิจัย", href: "https://landactionthai.org/research.html" },
+  { label: "นาเช่า", href: "https://landactionthai.org/field-rent.html" },
+  { label: "สินค้า", href: "https://landactionthai.org/product.html" },
+  {
+    label: "English",
+    href: "https://landactionthai.org/english.html",
+    isUppercase: true,
+  },
+  {
+    label: "E-Book",
+    href: "https://landactionthai.org/e-book.html",
+    isUppercase: true,
+  },
+  {
+    label: "สื่อรณรงค์",
+    href: "https://landactionthai.org/2012-05-18-03-24-45/article.html",
+  },
+  { label: "สิทธิที่ดิน", href: "https://landactionthai.org/land-reform.html" },
+  { label: "หนี้สินชาวนา", href: "https://landactionthai.org/menu-debt.html" },
+  { label: "ค้นหา", href: "https://landactionthai.org/search.html" },
   { label: "Mapping", href: "#", isActive: true, isUppercase: true },
 ];
 ---
@@ -110,26 +121,32 @@ const menuItems = [
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Food Map 4 จังหวัด</title>
+    <title>มูลนิธิชีวิตไทย - แผนที่ 4 จังหวัด</title>
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="LocalAct" />
+    <link rel="manifest" href="/site.webmanifest" />
   </head>
   <body class="bg-gray-100 min-h-screen flex flex-col">
     {/* ================= HEADER ================= */}
     <header
-      class="bg-white border-b border-gray-200 shadow-sm z-50 sticky top-0"
+      class="bg-white border-b border-gray-200 w-full shadow-sm z-50 sticky top-0"
     >
       <div
-        class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center"
+        class="max-w-7xl mx-auto px-6 py-1 flex flex-wrap justify-between items-center"
       >
         {/* โลโก้ */}
         <a
           href="https://landactionthai.org"
           class="flex items-center gap-3 hover:opacity-80 transition"
-          title="กลับสู่หน้าหลักมูลนิธิชีวิตไท"
+          title="หน้าหลักมูลนิธิชีวิตไท"
         >
           <img
-            src="https://landactionthai.org/templates/yootheme/cache/Screenshot_2563-01-06_at_192605-a2150f35.png"
+            src="/images/logo.png"
             alt="Local Act Logo"
-            class="h-16 lg:h-20 object-contain"
+            class="h-16 lg:h-24 object-contain"
             onError={(e) => (e.target.style.display = "none")}
           />
         </a>
@@ -137,10 +154,9 @@ const menuItems = [
         {/* ปุ่ม Hamburger (แสดงเฉพาะจอมือถือ) */}
         <button
           id="mobile-menu-btn"
-          class="lg:hidden block text-xs px-2 py-1 border border-gray-300 rounded-md text-gray-700 hover:text-green-700 focus:outline-none"
+          class="lg:hidden block text-xs px-2 py-1 text-gray-700 hover:text-green-700 focus:outline-none"
         >
-          เมนู
-          <!-- <svg
+          <svg
             xmlns="http://www.w3.org/2000/svg"
             class="h-8 w-8"
             fill="none"
@@ -152,19 +168,19 @@ const menuItems = [
               stroke-linejoin="round"
               stroke-width="2"
               d="M4 6h16M4 12h16M4 18h16"></path>
-          </svg> -->
+          </svg>
         </button>
 
         {/* เมนูนำทาง (วนลูปจาก Array) */}
         <nav
           id="mobile-menu"
-          class="hidden w-full lg:flex lg:w-auto flex-col lg:flex-row justify-between items-center gap-x-5 gap-y-4 text-xs font-bold text-gray-700 mt-4 lg:mt-0 pb-4 lg:pb-0"
+          class="hidden w-full lg:flex lg:w-auto flex-col lg:flex-row justify-between items-center gap-x-5 gap-y-4 text-xs md:text-[16px] text-gray-700 mt-4 lg:mt-0 pb-4 lg:pb-0"
         >
           {
             menuItems.map((item) =>
               item.isActive ? (
                 <span
-                  class={`text-red-800 cursor-default border-b-2 border-red-800 pb-0.5 inline-block ${item.isUppercase ? "uppercase" : ""}`}
+                  class={`text-red-800 cursor-default  inline-block ${item.isUppercase ? "uppercase" : ""}`}
                 >
                   {item.label}
                 </span>
@@ -211,7 +227,7 @@ const menuItems = [
               ต.บางรักน้อย<br />อ.เมือง จ.นนทบุรี 11000
             </p>
             <p class="pt-2">
-              <strong>โทรศัพท์:</strong> 02 040 9969 | 090 178 7508
+              <strong>โทรศัพท์:</strong> 02 040 9969
             </p>
             <p>
               <strong>E-mail:</strong>
@@ -242,7 +258,7 @@ const menuItems = [
             </a>
             {/* YouTube */}
             <a
-              href="https://www.youtube.com/"
+              href="https://www.youtube.com/channel/UCnRXlZI8USErpS10s1JSDZg"
               target="_blank"
               rel="noreferrer"
               class="bg-red-600 text-white p-2 rounded-full hover:bg-red-700 transition"
