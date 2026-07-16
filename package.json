@@ -12,8 +12,6 @@
     "@astrojs/cloudflare": "^12.6.13",
     "@astrojs/react": "^5.0.3",
     "@fontsource-variable/anuphan": "^5.2.8",
-    "@keystatic/astro": "^5.0.6",
-    "@keystatic/core": "^0.5.50",
     "@tailwindcss/vite": "^4.1.18",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",

@@ -2,93 +2,35 @@
 import { getCollection } from "astro:content";
 import InteractiveMap from "../components/InteractiveMap";
 import "../styles/global.css";
-import { createReader } from "@keystatic/core/reader";
-import keystaticConfig from "../../keystatic.config";
+import { marked } from "marked"; // 👈 เพิ่มไลบรารีแปลง Markdown เป็น HTML
 
-const reader = createReader(process.cwd(), keystaticConfig);
-const rawLocations = await reader.collections.locations.all();
-const rawNetworks = await reader.collections.networks.all();
-// 1. ดึงข้อมูลมาทั้ง 2 คอลเลกชัน
-const allLocations = await getCollection("locations");
-const allNetworks = await getCollection("networks");
+// 1. ดึงข้อมูลมาทั้ง 2 คอลเลกชัน จากโฟลเดอร์ src/content (ตามที่คุณเขียนไว้)
+const locations = await getCollection("locations");
+const networks = await getCollection("networks");
 
-// 🚨 นี่คือฟังก์ชันพระเอกของเรา: แปลง Array ของ Keystatic ให้เป็น HTML อัตโนมัติ
-function keystaticToHTML(nodes) {
-  if (!nodes || !Array.isArray(nodes)) return "";
-  return nodes
-    .map((node) => {
-      // 1. ถ้าก้อนนี้เป็น "ข้อความ"
-      if (node.text !== undefined) {
-        let text = node.text;
-        if (node.bold) text = `<strong>${text}</strong>`;
-        if (node.italic) text = `<em>${text}</em>`;
-        return text;
-      }
+// 2. โหลดข้อมูล Locations และแปลงเป็นรูปแบบที่ React ต้องการ
+const mapData = locations.map((loc) => {
+  // แปลงเนื้อหา Markdown ในไฟล์ (.body) ให้กลายเป็น HTML String
+  const htmlContent = loc.body ? marked.parse(loc.body) : "";
 
-      // 2. ถ้าก้อนนี้เป็น "โครงสร้าง" (ย่อหน้า, หัวข้อ, ลิสต์)
-      const childrenHTML = keystaticToHTML(node.children);
-      switch (node.type) {
-        case "paragraph":
-          return `<p class="mb-4">${childrenHTML}</p>`;
-        case "heading":
-          return `<h${node.level || 3} class="text-lg font-bold text-gray-800 mt-4 mb-2">${childrenHTML}</h${node.level || 3}>`;
-        case "unordered-list":
-          return `<ul class="list-disc pl-6 mb-4 space-y-2 text-gray-700">${childrenHTML}</ul>`;
+  return {
+    ...loc.data, // ข้อมูลพิกัดและรายละเอียดต่างๆ จะซ่อนอยู่ใน .data
+    slug: loc.id, // ระบบใหม่ของ Astro จะใช้ .id แทน slug
+    contentHTML: htmlContent, // ส่ง HTML ที่เสร็จแล้วไปให้ React
+  };
+});
 
-        case "ordered-list":
-          return `<ol class="list-decimal pl-6 mb-4 space-y-2 text-gray-700">${childrenHTML}</ol>`;
-        case "list":
-          return node.ordered
-            ? `<ol class="list-decimal pl-5 mb-4">${childrenHTML}</ol>`
-            : `<ul class="list-disc pl-5 mb-4">${childrenHTML}</ul>`;
-        case "item":
-        case "list-item":
-          return `<li class="pl-1">${childrenHTML}</li>`;
-        case "link":
-          return `<a href="${node.href}" class="text-blue-600 underline" target="_blank">${childrenHTML}</a>`;
-        case "divider":
-          return `<hr class="my-4 border-gray-300" />`;
-        case "image":
-          return `<img src="${node.src}" alt="${node.alt || "รูปภาพประกอบ"}" class="w-full max-w-2xl mx-auto rounded-lg shadow-sm border border-gray-100 my-6 object-contain" />`;
-        default:
-          return childrenHTML;
-      }
-    })
-    .join("");
-}
+// 3. โหลดข้อมูล Networks
+const networkData = networks.map((net) => {
+  // ทำการแปลงเนื้อหา Markdown เช่นเดียวกัน
+  const htmlContent = net.body ? marked.parse(net.body) : "";
 
-// โหลดข้อมูลและแปลงเป็น HTML
-const mapData = await Promise.all(
-  rawLocations.map(async (loc) => {
-    // ดึงก้อนข้อมูล Array จาก Keystatic
-    const astArray = await loc.entry.content();
-
-    // โยนเข้าฟังก์ชันแปลงร่าง
-    const htmlContent = keystaticToHTML(astArray);
-
-    return {
-      ...loc.entry,
-      slug: loc.slug,
-      contentHTML: htmlContent, // ส่ง HTML ที่เสร็จแล้วไปให้ React
-    };
-  }),
-);
-
-// 👇 แปลงข้อมูล Networks (เพื่อเอา HTML content)
-const networkData = await Promise.all(
-  rawNetworks.map(async (net) => {
-    const astArray =
-      typeof net.entry.knowledgeSharingContent === "function"
-        ? await net.entry.knowledgeSharingContent()
-        : [];
-
-    return {
-      ...net.entry,
-      slug: net.slug,
-      contentHTML: keystaticToHTML(astArray),
-    };
-  }),
-);
+  return {
+    ...net.data,
+    slug: net.id,
+    contentHTML: htmlContent,
+  };
+});
 
 const menuItems = [
   { label: "หน้าหลัก", href: "https://landactionthai.org" },

@@ -1,0 +1,192 @@
+local_backend: true
+
+backend:
+  name: github
+  repo: pradit.lee/foodmap # ดึงมาจาก repository เดิมของคุณ
+  branch: main # แก้เป็นชื่อ Branch หลักของคุณ (เช่น main หรือ master)
+  base_url: "https://weathered-art-9672.demomefa.workers.dev/"
+
+# ตั้งค่าที่เก็บรูปภาพทั้งหมด (ง่ายและเป็นระเบียบกว่า Keystatic)
+media_folder: "public/images/uploads"
+public_folder: "/images/uploads"
+
+collections:
+  # ==========================================
+  # 1. คอลเลกชัน เครือข่าย (Networks)
+  # ==========================================
+  - name: "networks"
+    label: "เครือข่าย (Networks)"
+    folder: "src/content/networks"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - {
+          label: "ชื่อกลุ่ม / สถานที่ (ภาษาไทย)",
+          name: "name",
+          widget: "string",
+          required: true,
+        }
+      - {
+          label: "รหัสอ้างอิง URL (Slug) **ใช้ภาษาอังกฤษและขีดกลางเท่านั้น**",
+          name: "slug",
+          widget: "string",
+          required: true,
+        }
+      - {
+          label: "จังหวัดที่เครือข่ายนี้อยู่",
+          name: "province",
+          widget: "select",
+          options:
+            [
+              { label: "ชัยนาท", value: "chainat" },
+              { label: "สุพรรณบุรี", value: "suphanburi" },
+              { label: "นครปฐม", value: "nakhonpathom" },
+              { label: "นนทบุรี", value: "nonthaburi" },
+            ],
+          default: "chainat",
+        }
+      - {
+          label: "รูปภาพหน้าปกเครือข่าย",
+          name: "imageUrl",
+          widget: "image",
+          required: false,
+        }
+      # Decap CMS จะใช้คำว่า "body" เป็นมาตรฐานสำหรับเก็บเนื้อหา Markdown เสมอ
+      - {
+          label: "การเสริมสร้างองค์ความรู้และรูปแบบการให้บริการอาหารเพื่อสุขภาวะ",
+          name: "body",
+          widget: "markdown",
+          required: false,
+        }
+
+  # ==========================================
+  # 2. คอลเลกชัน สถานที่ / กลุ่ม (Locations)[cite: 2]
+  # ==========================================
+  - name: "locations"
+    label: "สถานที่ / กลุ่ม (Locations)"
+    folder: "src/content/locations"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - {
+          label: "ชื่อกลุ่ม / สถานที่",
+          name: "name",
+          widget: "string",
+          required: true,
+        }
+      - {
+          label: "รหัสอ้างอิง URL (Slug) **ใช้ภาษาอังกฤษและขีดกลางเท่านั้น**",
+          name: "slug",
+          widget: "string",
+          required: true,
+        }
+
+      - label: "พิกัดและที่ตั้ง"
+        name: "coordinates"
+        widget: "object"
+        fields:
+          - {
+              label: "Latitude",
+              name: "lat",
+              widget: "string",
+              required: false,
+            }
+          - {
+              label: "Longitude",
+              name: "lng",
+              widget: "string",
+              required: false,
+            }
+
+      - {
+          label: "จังหวัด",
+          name: "province",
+          widget: "select",
+          options:
+            [
+              { label: "ชัยนาท", value: "chainat" },
+              { label: "สุพรรณบุรี", value: "suphanburi" },
+              { label: "นครปฐม", value: "nakhonpathom" },
+              { label: "นนทบุรี", value: "nonthaburi" },
+            ],
+          default: "chainat",
+        }
+      - {
+          label: "ประเภท (จุดในห่วงโซ่)",
+          name: "supplyChainStage",
+          widget: "select",
+          options:
+            [
+              { label: "ผู้ผลิต", value: "upstream" },
+              { label: "ตลาดเขียว", value: "midstream" },
+              { label: "หน่วยงานภาคี", value: "partner" },
+            ],
+          default: "upstream",
+        }
+
+      - label: "รายการผลผลิต / ผลิตภัณฑ์"
+        name: "productList"
+        widget: "list"
+        required: false
+        fields:
+          - { label: "ชื่อผลผลิต / ผลิตภัณฑ์", name: "name", widget: "string" }
+          - {
+              label: "มาตรฐาน",
+              name: "standards",
+              widget: "select",
+              multiple: true,
+              options:
+                [
+                  { label: "PGS", value: "pgs" },
+                  { label: "Organic Thailand", value: "organic_thailand" },
+                  { label: "GAP", value: "gap" },
+                  { label: "OTOP", value: "fda_otop" },
+                  { label: "ทั่วไป / ไม่มีตรารับรอง", value: "general" },
+                ],
+              default: ["general"],
+            }
+          - {
+              label: "รูปภาพผลผลิต (ถ้ามี)",
+              name: "productImage",
+              widget: "image",
+              required: false,
+            }
+
+      - label: "ช่องทางการติดต่อ"
+        name: "contacts"
+        widget: "list"
+        required: false
+        fields:
+          - {
+              label: "ประเภทการติดต่อ",
+              name: "type",
+              widget: "select",
+              options:
+                [
+                  { label: "ที่อยู่", value: "address" },
+                  { label: "เบอร์โทรศัพท์", value: "phone" },
+                  { label: "Facebook / เว็บไซต์", value: "link" },
+                  { label: "Line ID", value: "line" },
+                ],
+              default: "address",
+            }
+          - {
+              label: "ชื่อแสดงผล (เช่น เบอร์คุณเอ, แฟนเพจกลุ่ม)",
+              name: "label",
+              widget: "string",
+            }
+          - { label: "ข้อมูล", name: "value", widget: "string" }
+
+      - label: "แกลเลอรีรูปภาพ"
+        name: "images"
+        widget: "list"
+        required: false
+        field: { label: "รูปภาพ", name: "image", widget: "image" }
+
+      # ช่องเนื้อหาหลักของหน้า (แทนที่ content เดิม)
+      - {
+          label: "ข้อมูล และ กิจกรรม/การดำเนินงาน",
+          name: "body",
+          widget: "markdown",
+          required: false,
+        }
