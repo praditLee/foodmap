@@ -4,7 +4,7 @@ backend:
   name: github
   repo: pradit.lee/foodmap # ดึงมาจาก repository เดิมของคุณ
   branch: main # แก้เป็นชื่อ Branch หลักของคุณ (เช่น main หรือ master)
-  base_url: "https://foodmap-decap-oauth.demomefa.workers.dev/"
+  base_url: "https://foodmap-decap-oauth.demomefa.workers.dev"
 
 # ตั้งค่าที่เก็บรูปภาพทั้งหมด (ง่ายและเป็นระเบียบกว่า Keystatic)
 media_folder: "public/images/uploads"
@@ -23,12 +23,6 @@ collections:
       - {
           label: "ชื่อกลุ่ม / สถานที่ (ภาษาไทย)",
           name: "name",
-          widget: "string",
-          required: true,
-        }
-      - {
-          label: "รหัสอ้างอิง URL (Slug) **ใช้ภาษาอังกฤษและขีดกลางเท่านั้น**",
-          name: "slug",
           widget: "string",
           required: true,
         }
@@ -69,14 +63,15 @@ collections:
     slug: "{{slug}}"
     fields:
       - {
-          label: "ชื่อกลุ่ม / สถานที่",
-          name: "name",
+          label: "Slug (URL)",
+          name: "slug",
           widget: "string",
-          required: true,
+          hint: "ห้ามเว้นวรรค ใช้ภาษาอังกฤษเท่านั้น เช่น suan-pak-organic",
+          required: false,
         }
       - {
-          label: "รหัสอ้างอิง URL (Slug) **ใช้ภาษาอังกฤษและขีดกลางเท่านั้น**",
-          name: "slug",
+          label: "ชื่อกลุ่ม / สถานที่",
+          name: "name",
           widget: "string",
           required: true,
         }
@@ -174,6 +169,7 @@ collections:
               label: "ชื่อแสดงผล (เช่น เบอร์คุณเอ, แฟนเพจกลุ่ม)",
               name: "label",
               widget: "string",
+              required: false,
             }
           - { label: "ข้อมูล", name: "value", widget: "string" }
 

@@ -167,19 +167,24 @@ function MapContent({ allLocations, allNetworks }) {
   }, [allLocations, map]); // ให้ทำงานเมื่อข้อมูลสถานที่พร้อม หรือ แผนที่โหลดเสร็จ
 
   // 🎯 ฟังก์ชันสำหรับกดแล้วให้แผนที่วิ่งไปหาพิกัดสถานที่
+  // 🎯 ฟังก์ชันสำหรับกดแล้วให้แผนที่วิ่งไปหาพิกัดสถานที่
   const handlePlaceSelect = (loc) => {
-    setSelectedPlace(loc); 
-
-    // 👇 ดึงพิกัดโดยเช็คเผื่อไว้ทั้ง 2 รูปแบบ (loc.lat หรือ loc.coordinates.lat)
+    // 👇 ดึงพิกัด
     const latVal = parseFloat(loc.lat || loc?.coordinates?.lat);
     const lngVal = parseFloat(loc.lng || loc?.coordinates?.lng);
 
-    if (map && !isNaN(latVal) && !isNaN(lngVal)) {
-      map.panTo({ lat: latVal, lng: lngVal });
-      map.setZoom(11); 
-    } 
-    // 👇 เพิ่มคำสั่งนี้: เมื่อคลิกสถานที่แล้ว ให้สลับหน้าจอมือถือกลับไปที่แผนที่
-    setMobileView('map');
+    if (!isNaN(latVal) && !isNaN(lngVal)) {
+      // ✅ กรณีที่ 1: "มีพิกัด" -> โชว์ป้ายบนแผนที่ และซูมเข้าไป
+      setSelectedPlace(loc); 
+      if (map) {
+        map.panTo({ lat: latVal, lng: lngVal });
+        map.setZoom(11); 
+      } 
+      setMobileView('map');
+    } else {
+      // ✅ กรณีที่ 2: "ไม่มีพิกัด" -> ไม่ต้องพยายามโชว์บนแผนที่ ให้เด้ง Modal หน้าต่างรายละเอียดขึ้นมาเลย!
+      setModalLocation(loc);
+    }
   };
   // 🔄 ฟังก์ชันปุ่ม "ดูภาพรวม 4 จังหวัด" (Reset View)
   const handleResetView = () => {
