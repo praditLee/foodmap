@@ -4,7 +4,7 @@ backend:
   name: github
   repo: pradit.lee/foodmap # ดึงมาจาก repository เดิมของคุณ
   branch: main # แก้เป็นชื่อ Branch หลักของคุณ (เช่น main หรือ master)
-  base_url: "https://foodmap-decap-oauth.demomefa.workers.dev"
+  base_url: "https://oauth-proxy-foodmap.demomefa.workers.dev"
 
 # ตั้งค่าที่เก็บรูปภาพทั้งหมด (ง่ายและเป็นระเบียบกว่า Keystatic)
 media_folder: "public/images/uploads"
