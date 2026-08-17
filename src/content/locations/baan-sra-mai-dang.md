@@ -1,9 +1,8 @@
 ---
 name: วิสาหกิจชุมชนบ้านสระไม้แดง ต.แพรกศรีราชา
-
 coordinates:
-  lat: '15.031351284787759'
-  lng: '100.107311130416'
+  lat: "15.031351284787759"
+  lng: "100.107311130416"
 province: chainat
 supplyChainStage: upstream
 productList:
@@ -15,6 +14,7 @@ productList:
     standards:
       - fda_otop
       - gap
+    productImage: /images/uploads/sample-banana.jpg
   - name: กล้วยกวน
     standards:
       - fda_otop
@@ -23,22 +23,26 @@ productList:
     standards:
       - general
   - name: มันทอด
-    standards: []
+    standards:
+      - general
   - name: ธูปสมุนไพรไล่ยุง
-    standards: []
+    standards:
+      - general
   - name: กล้วยทอดกรอบรสชาติต่างๆ
-    standards: &ref_0
+    standards:
       - general
   - name: ขนุนทอด
-    standards: *ref_0
+    standards:
+      - general
   - name: สเปรย์สมุนไพรไล่ยุง
-    standards: *ref_0
+    standards:
+      - general
 contacts:
   - type: address
     value: เลขที่ 20/2 หมู่ 16 ตำบลแพรกศรีราชา อำเภอสรรคบุรี ชัยนาท 17140
   - type: phone
     label: นางสุพิทย์ ศรีทอง, นางวรรณี วงษ์แก้ว
-    value: '0894594747'
+    value: "0894594747"
 images:
   - /images/locations/baan-sra-mai-dang/images/0.webp
 ---
