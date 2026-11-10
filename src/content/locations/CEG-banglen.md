@@ -1,22 +1,35 @@
 ---
 name: วิสาหกิจชุมชนกลุ่มนาแปลงใหญ่ข้าวไผ่หูช้าง อ.บางเลน
 coordinates:
-  lat: '14.0618380974803'
-  lng: '100.108351668156'
+  lat: "14.0618380974803"
+  lng: "100.108351668156"
 province: nakhonpathom
 supplyChainStage: upstream
 productList:
   - name: ข้าวกข.43 น้ำตาลต่ำ
-    standards: &ref_0
+    standards:
       - general
+      - gap
+    calendar:
+      jul: planting
+      dec: planting
+      jun: planting
+      feb: peak
+      may: planting
+      aug: harvest
+      nov: planting
+      jan: planting
+      sep: harvest
+      mar: peak
   - name: ข้าวไรซ์เบอร์รี่
-    standards: *ref_0
+    standards:
+      - general
 contacts:
   - type: address
     value: 66 หมู่ 3 ตำบลไผ่หูช้าง อำเภอบางเลน นครปฐม 73130
   - type: phone
     label: นายไชยยา วิมูลชาติ
-    value: '0616783097'
+    value: "0616783097"
   - type: link
     value: https://www.facebook.com/chiy.ya.wi.mul.chati
 images:
