@@ -1,6 +1,8 @@
 import { defineCollection, z } from 'astro:content'; // 👈 เพิ่ม z เข้ามาตรงนี้
 import { glob } from 'astro/loaders';
 
+// 1. กำหนดตัวเลือกสถานะของเดือน (ตรงกับ value ใน config.yml)
+const monthStatusEnum = z.enum(["planting", "harvest", "peak"]).optional();
 // 1. คอลเลกชัน Locations
 const locations = defineCollection({
   // 👇 1. เปลี่ยนจาก .mdoc เป็น .md 
@@ -21,8 +23,24 @@ const locations = defineCollection({
     productList: z.array(
       z.object({
         name: z.string(),
+        yieldAmount: z.string().optional(),
         standards: z.array(z.string()).optional(),
-        productImage: z.string().optional(),
+        
+        // โครงสร้างปฏิทินที่พร้อมใช้งานวาดกราฟิก
+        calendar: z.object({
+          jan: monthStatusEnum,
+          feb: monthStatusEnum,
+          mar: monthStatusEnum,
+          apr: monthStatusEnum,
+          may: monthStatusEnum,
+          jun: monthStatusEnum,
+          jul: monthStatusEnum,
+          aug: monthStatusEnum,
+          sep: monthStatusEnum,
+          oct: monthStatusEnum,
+          nov: monthStatusEnum,
+          dec: monthStatusEnum,
+        }).optional(), // optional แปลว่าผลผลิตตัวไหนไม่มีปฏิทิน ก็จะไม่พัง
       })
     ).optional(),
 

@@ -140,12 +140,159 @@ collections:
                 ],
               default: ["general"],
             }
-          - {
-              label: "รูปภาพผลผลิต (ถ้ามี)",
-              name: "productImage",
-              widget: "image",
-              required: false,
-            }
+          # --- 2. ข้อมูลปฏิทิน (สำหรับเอาไปทำ Infographic) ---
+          - label: "📅 ปฏิทินฤดูกาล (ข้ามได้ถ้าไม่มีข้อมูล)"
+            name: "calendar"
+            widget: "object"
+            required: false
+            collapsed: true # พับซ่อนไว้ก่อน เพื่อความสะอาดตา
+            fields:
+              # เราจะสร้าง Dropdown 12 เดือน ให้แอดมินเลือกสถานะตามสี
+              # (แนะนำให้ก๊อปปี้แบบนี้ไปให้ครบ 12 เดือนตั้งแต่ jan ถึง dec ครับ)
+              - {
+                  label: "มกราคม",
+                  name: "jan",
+                  widget: "select",
+                  required: false,
+                  options:
+                    [
+                      { label: "🟨 ช่วงเวลาปลูก", value: "planting" },
+                      { label: "🟩 ช่วงเวลาเก็บเกี่ยว", value: "harvest" },
+                      { label: "🟩 ช่วงที่ผลผลิตออกมากที่สุด", value: "peak" },
+                    ],
+                }
+              - {
+                  label: "กุมภาพันธ์",
+                  name: "feb",
+                  widget: "select",
+                  required: false,
+                  options:
+                    [
+                      { label: "🟨 ช่วงเวลาปลูก", value: "planting" },
+                      { label: "🟩 ช่วงเวลาเก็บเกี่ยว", value: "harvest" },
+                      { label: "🟩 ช่วงที่ผลผลิตออกมากที่สุด", value: "peak" },
+                    ],
+                }
+              - {
+                  label: "มีนาคม",
+                  name: "mar",
+                  widget: "select",
+                  required: false,
+                  options:
+                    [
+                      { label: "🟨 ช่วงเวลาปลูก", value: "planting" },
+                      { label: "🟩 ช่วงเวลาเก็บเกี่ยว", value: "harvest" },
+                      { label: "🟩 ช่วงที่ผลผลิตออกมากที่สุด", value: "peak" },
+                    ],
+                }
+              - {
+                  label: "เมษายน",
+                  name: "apr",
+                  widget: "select",
+                  required: false,
+                  options:
+                    [
+                      { label: "🟨 ช่วงเวลาปลูก", value: "planting" },
+                      { label: "🟩 ช่วงเวลาเก็บเกี่ยว", value: "harvest" },
+                      { label: "🟩 ช่วงที่ผลผลิตออกมากที่สุด", value: "peak" },
+                    ],
+                }
+              - {
+                  label: "พฤษภาคม",
+                  name: "may",
+                  widget: "select",
+                  required: false,
+                  options:
+                    [
+                      { label: "🟨 ช่วงเวลาปลูก", value: "planting" },
+                      { label: "🟩 ช่วงเวลาเก็บเกี่ยว", value: "harvest" },
+                      { label: "🟩 ช่วงที่ผลผลิตออกมากที่สุด", value: "peak" },
+                    ],
+                }
+              - {
+                  label: "มิถุนายน",
+                  name: "jun",
+                  widget: "select",
+                  required: false,
+                  options:
+                    [
+                      { label: "🟨 ช่วงเวลาปลูก", value: "planting" },
+                      { label: "🟩 ช่วงเวลาเก็บเกี่ยว", value: "harvest" },
+                      { label: "🟩 ช่วงที่ผลผลิตออกมากที่สุด", value: "peak" },
+                    ],
+                }
+              - {
+                  label: "กรกฎาคม",
+                  name: "jul",
+                  widget: "select",
+                  required: false,
+                  options:
+                    [
+                      { label: "🟨 ช่วงเวลาปลูก", value: "planting" },
+                      { label: "🟩 ช่วงเวลาเก็บเกี่ยว", value: "harvest" },
+                      { label: "🟩 ช่วงที่ผลผลิตออกมากที่สุด", value: "peak" },
+                    ],
+                }
+              - {
+                  label: "สิงหาคม",
+                  name: "aug",
+                  widget: "select",
+                  required: false,
+                  options:
+                    [
+                      { label: "🟨 ช่วงเวลาปลูก", value: "planting" },
+                      { label: "🟩 ช่วงเวลาเก็บเกี่ยว", value: "harvest" },
+                      { label: "🟩 ช่วงที่ผลผลิตออกมากที่สุด", value: "peak" },
+                    ],
+                }
+              - {
+                  label: "กันยายน",
+                  name: "sep",
+                  widget: "select",
+                  required: false,
+                  options:
+                    [
+                      { label: "🟨 ช่วงเวลาปลูก", value: "planting" },
+                      { label: "🟩 ช่วงเวลาเก็บเกี่ยว", value: "harvest" },
+                      { label: "🟩 ช่วงที่ผลผลิตออกมากที่สุด", value: "peak" },
+                    ],
+                }
+              - {
+                  label: "ตุลาคม",
+                  name: "oct",
+                  widget: "select",
+                  required: false,
+                  options:
+                    [
+                      { label: "🟨 ช่วงเวลาปลูก", value: "planting" },
+                      { label: "🟩 ช่วงเวลาเก็บเกี่ยว", value: "harvest" },
+                      { label: "🟩 ช่วงที่ผลผลิตออกมากที่สุด", value: "peak" },
+                    ],
+                }
+              - {
+                  label: "พฤศจิกายน",
+                  name: "nov",
+                  widget: "select",
+                  required: false,
+                  options:
+                    [
+                      { label: "🟨 ช่วงเวลาปลูก", value: "planting" },
+                      { label: "🟩 ช่วงเวลาเก็บเกี่ยว", value: "harvest" },
+                      { label: "🟩 ช่วงที่ผลผลิตออกมากที่สุด", value: "peak" },
+                    ],
+                }
+              - {
+                  label: "ธันวาคม",
+                  name: "dec",
+                  widget: "select",
+                  required: false,
+                  options:
+                    [
+                      { label: "🟨 ช่วงเวลาปลูก", value: "planting" },
+                      { label: "🟩 ช่วงเวลาเก็บเกี่ยว", value: "harvest" },
+                      { label: "🟩 ช่วงที่ผลผลิตออกมากที่สุด", value: "peak" },
+                    ],
+                }
 
       - label: "ช่องทางการติดต่อ"
         name: "contacts"
