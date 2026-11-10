@@ -483,6 +483,8 @@ function MapContent({ allLocations, allNetworks }) {
         <NetworkModal 
           networkData={currentNetworkData} 
           provinceName={getProvinceThai(activeProvinceSlug)}
+          allLocations={allLocations}                 // <-- เพิ่มบรรทัดนี้
+          provinceSlug={activeProvinceSlug}           // <-- เพิ่มบรรทัดนี้
           onClose={() => setShowNetworkModal(false)} 
         />
       )}

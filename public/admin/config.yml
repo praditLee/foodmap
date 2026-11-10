@@ -126,7 +126,13 @@ collections:
         fields:
           - { label: "ชื่อผลผลิต / ผลิตภัณฑ์", name: "name", widget: "string" }
           - {
-              label: "มาตรฐาน",
+              label: "ปริมาณผลผลิต โดยประมาณ (เช่น 3-5 ตัน/ไร่ 40-50 ตัน)",
+              name: "yieldAmount",
+              widget: "string",
+              required: false,
+            }
+          - {
+              label: "ระบบการผลิต",
               name: "standards",
               widget: "select",
               multiple: true,
@@ -137,6 +143,7 @@ collections:
                   { label: "GAP", value: "gap" },
                   { label: "OTOP", value: "fda_otop" },
                   { label: "ทั่วไป / ไม่มีตรารับรอง", value: "general" },
+                  { label: "เกษตรครัวเรือน", value: "safety" },
                 ],
               default: ["general"],
             }
@@ -159,6 +166,10 @@ collections:
                       { label: "🟨 ช่วงเวลาปลูก", value: "planting" },
                       { label: "🟩 ช่วงเวลาเก็บเกี่ยว", value: "harvest" },
                       { label: "🟩 ช่วงที่ผลผลิตออกมากที่สุด", value: "peak" },
+                      {
+                        label: "🟧 รับผลิตแบบสั่งล่วงหน้า",
+                        value: "pre-order",
+                      },
                     ],
                 }
               - {
@@ -171,6 +182,10 @@ collections:
                       { label: "🟨 ช่วงเวลาปลูก", value: "planting" },
                       { label: "🟩 ช่วงเวลาเก็บเกี่ยว", value: "harvest" },
                       { label: "🟩 ช่วงที่ผลผลิตออกมากที่สุด", value: "peak" },
+                      {
+                        label: "🟧 รับผลิตแบบสั่งล่วงหน้า",
+                        value: "pre-order",
+                      },
                     ],
                 }
               - {
@@ -183,6 +198,10 @@ collections:
                       { label: "🟨 ช่วงเวลาปลูก", value: "planting" },
                       { label: "🟩 ช่วงเวลาเก็บเกี่ยว", value: "harvest" },
                       { label: "🟩 ช่วงที่ผลผลิตออกมากที่สุด", value: "peak" },
+                      {
+                        label: "🟧 รับผลิตแบบสั่งล่วงหน้า",
+                        value: "pre-order",
+                      },
                     ],
                 }
               - {
@@ -195,6 +214,10 @@ collections:
                       { label: "🟨 ช่วงเวลาปลูก", value: "planting" },
                       { label: "🟩 ช่วงเวลาเก็บเกี่ยว", value: "harvest" },
                       { label: "🟩 ช่วงที่ผลผลิตออกมากที่สุด", value: "peak" },
+                      {
+                        label: "🟧 รับผลิตแบบสั่งล่วงหน้า",
+                        value: "pre-order",
+                      },
                     ],
                 }
               - {
@@ -207,6 +230,10 @@ collections:
                       { label: "🟨 ช่วงเวลาปลูก", value: "planting" },
                       { label: "🟩 ช่วงเวลาเก็บเกี่ยว", value: "harvest" },
                       { label: "🟩 ช่วงที่ผลผลิตออกมากที่สุด", value: "peak" },
+                      {
+                        label: "🟧 รับผลิตแบบสั่งล่วงหน้า",
+                        value: "pre-order",
+                      },
                     ],
                 }
               - {
@@ -219,6 +246,10 @@ collections:
                       { label: "🟨 ช่วงเวลาปลูก", value: "planting" },
                       { label: "🟩 ช่วงเวลาเก็บเกี่ยว", value: "harvest" },
                       { label: "🟩 ช่วงที่ผลผลิตออกมากที่สุด", value: "peak" },
+                      {
+                        label: "🟧 รับผลิตแบบสั่งล่วงหน้า",
+                        value: "pre-order",
+                      },
                     ],
                 }
               - {
@@ -231,6 +262,10 @@ collections:
                       { label: "🟨 ช่วงเวลาปลูก", value: "planting" },
                       { label: "🟩 ช่วงเวลาเก็บเกี่ยว", value: "harvest" },
                       { label: "🟩 ช่วงที่ผลผลิตออกมากที่สุด", value: "peak" },
+                      {
+                        label: "🟧 รับผลิตแบบสั่งล่วงหน้า",
+                        value: "pre-order",
+                      },
                     ],
                 }
               - {
@@ -243,6 +278,10 @@ collections:
                       { label: "🟨 ช่วงเวลาปลูก", value: "planting" },
                       { label: "🟩 ช่วงเวลาเก็บเกี่ยว", value: "harvest" },
                       { label: "🟩 ช่วงที่ผลผลิตออกมากที่สุด", value: "peak" },
+                      {
+                        label: "🟧 รับผลิตแบบสั่งล่วงหน้า",
+                        value: "pre-order",
+                      },
                     ],
                 }
               - {
@@ -255,6 +294,10 @@ collections:
                       { label: "🟨 ช่วงเวลาปลูก", value: "planting" },
                       { label: "🟩 ช่วงเวลาเก็บเกี่ยว", value: "harvest" },
                       { label: "🟩 ช่วงที่ผลผลิตออกมากที่สุด", value: "peak" },
+                      {
+                        label: "🟧 รับผลิตแบบสั่งล่วงหน้า",
+                        value: "pre-order",
+                      },
                     ],
                 }
               - {
@@ -267,6 +310,10 @@ collections:
                       { label: "🟨 ช่วงเวลาปลูก", value: "planting" },
                       { label: "🟩 ช่วงเวลาเก็บเกี่ยว", value: "harvest" },
                       { label: "🟩 ช่วงที่ผลผลิตออกมากที่สุด", value: "peak" },
+                      {
+                        label: "🟧 รับผลิตแบบสั่งล่วงหน้า",
+                        value: "pre-order",
+                      },
                     ],
                 }
               - {
@@ -279,6 +326,10 @@ collections:
                       { label: "🟨 ช่วงเวลาปลูก", value: "planting" },
                       { label: "🟩 ช่วงเวลาเก็บเกี่ยว", value: "harvest" },
                       { label: "🟩 ช่วงที่ผลผลิตออกมากที่สุด", value: "peak" },
+                      {
+                        label: "🟧 รับผลิตแบบสั่งล่วงหน้า",
+                        value: "pre-order",
+                      },
                     ],
                 }
               - {
@@ -291,6 +342,10 @@ collections:
                       { label: "🟨 ช่วงเวลาปลูก", value: "planting" },
                       { label: "🟩 ช่วงเวลาเก็บเกี่ยว", value: "harvest" },
                       { label: "🟩 ช่วงที่ผลผลิตออกมากที่สุด", value: "peak" },
+                      {
+                        label: "🟧 รับผลิตแบบสั่งล่วงหน้า",
+                        value: "pre-order",
+                      },
                     ],
                 }
 

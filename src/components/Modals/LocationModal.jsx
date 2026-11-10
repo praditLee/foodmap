@@ -47,7 +47,6 @@ const getSupplyChainTag = (stage) => {
 };
 
 export default function LocationModal({ locationData, onClose, onNetworkClick }) {
-  const [selectedProductImage, setSelectedProductImage] = useState(null);
 
   if (!locationData) return null;
 
@@ -58,6 +57,89 @@ export default function LocationModal({ locationData, onClose, onNetworkClick })
   };
 
   const supplyChainTag = getSupplyChainTag(locationData.supplyChainStage);
+
+  // 👇 เพิ่ม Component ย่อยสำหรับแสดงปฏิทินฤดูกาล 👇
+const SeasonalCalendarSection = ({ products }) => {
+  // 1. คัดกรองเอาเฉพาะผลผลิตที่มี yieldAmount หรือมีข้อมูล calendar อย่างน้อย 1 เดือน
+  const activeProducts = products?.filter(p => 
+    p.yieldAmount || (p.calendar && Object.values(p.calendar).some(val => val))
+  ) || [];
+
+  // 2. ถ้าไม่มีข้อมูลเลย ให้ซ่อนส่วนนี้ไปเลย
+  if (activeProducts.length === 0) return null;
+
+  // ข้อมูล 12 เดือนสำหรับใช้ Map วนลูป
+  const months = [
+    { id: 'jan', name: 'ม.ค.' }, { id: 'feb', name: 'ก.พ.' }, { id: 'mar', name: 'มี.ค.' },
+    { id: 'apr', name: 'เม.ย.' }, { id: 'may', name: 'พ.ค.' }, { id: 'jun', name: 'มิ.ย.' },
+    { id: 'jul', name: 'ก.ค.' }, { id: 'aug', name: 'ส.ค.' }, { id: 'sep', name: 'ก.ย.' },
+    { id: 'oct', name: 'ต.ค.' }, { id: 'nov', name: 'พ.ย.' }, { id: 'dec', name: 'ธ.ค.' }
+  ];
+
+  // ฟังก์ชันกำหนดสีตามสถานะ
+  const getStatusStyle = (status) => {
+    if (status === 'planting') return 'bg-[#fde047] text-yellow-900 border-yellow-400 font-medium'; // 🟨 สีเหลือง (ปลูก)
+    if (status === 'harvest') return 'bg-[#86efac] text-green-900 border-green-400 font-medium'; // 🟩 สีเขียวอ่อน (เก็บเกี่ยว)
+    if (status === 'peak') return 'bg-[#16a34a] text-white border-green-700 font-bold shadow-sm'; // 🟩 สีเขียวเข้ม (Peak)
+    if (status === 'pre-order') return 'bg-[#fdba74] text-orange-900 border-orange-400 font-medium';
+    return 'bg-gray-50 text-gray-300 border-gray-100'; // ⬜ ว่างเปล่า
+  };
+
+  return (
+    <div className="mb-8 border-b border-gray-100 pb-8 animate-in fade-in duration-500">
+      <h3 className="text-xl font-bold text-gray-800 mb-5 flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        ปฏิทินฤดูกาลและปริมาณผลผลิต
+      </h3>
+      
+      <div className="flex flex-col gap-4">
+        {activeProducts.map((item, idx) => (
+          <div key={idx} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:border-green-300 transition-colors">
+            
+            {/* หัวข้อชื่อผลผลิต และ ปริมาณ */}
+            <div className="flex flex-col md:flex-row justify-between md:items-center mb-4 gap-3">
+              <h4 className="font-bold text-lg text-gray-900">{item.name}</h4>
+              {item.yieldAmount && (
+                <span className="text-sm bg-blue-50 text-blue-700 px-3 py-1.5 rounded-md font-medium border border-blue-100 flex items-center gap-1.5">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
+                  ปริมาณ: {item.yieldAmount}
+                </span>
+              )}
+            </div>
+
+            {/* ตาราง 12 เดือน (แสดงเฉพาะเมื่อมีการกรอกปฏิทิน) */}
+            {item.calendar && Object.values(item.calendar).some(v => v) && (
+              <div className="grid grid-cols-6 md:grid-cols-12 gap-1.5 mt-2">
+                {months.map(m => {
+                  const status = item.calendar[m.id];
+                  return (
+                    <div 
+                      key={m.id} 
+                      className={`flex items-center justify-center py-2.5 rounded-md border text-xs sm:text-sm transition-all ${getStatusStyle(status)}`}
+                    >
+                      {m.name}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* คำอธิบายสัญลักษณ์สี */}
+      <div className="flex flex-wrap gap-x-5 gap-y-2 mt-5 text-sm text-gray-600 bg-gray-50/80 p-3 rounded-lg border border-gray-100 w-fit">
+         <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-sm bg-[#fde047] border border-yellow-400"></span> ช่วงเวลาปลูก</div>
+         <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-sm bg-[#86efac] border border-green-400"></span> ช่วงเก็บเกี่ยว</div>
+         <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-sm bg-[#16a34a] border border-green-700"></span> ออกผลมากที่สุด (Peak)</div>
+         <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-sm bg-[#fdba74] border border-orange-400"></span> รับผลิตสั่งล่วงหน้า (Pre-Order)</div>
+      </div>
+    </div>
+  );
+};
+
   const usedStandards = locationData.productList 
     ? Array.from(new Set(locationData.productList.flatMap(item => item.standards || [])))
         .filter(std => std !== 'general')
@@ -161,9 +243,7 @@ export default function LocationModal({ locationData, onClose, onNetworkClick })
               
               <div className="flex flex-wrap gap-x-4 gap-y-4 mt-2">
                 {locationData.productList.map((item, index) => (
-                  <button 
-                    key={`prod-${index}`} 
-                    onClick={() => item.productImage && setSelectedProductImage(item.productImage)}
+                  <div
                     className={`relative flex flex-col justify-center px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 min-w-[130px] text-center shadow-sm ${item.productImage ? 'hover:border-blue-300 hover:bg-blue-50 cursor-pointer' : 'cursor-default'}`} 
                   >
                     <span className="font-semibold text-gray-800 text-base">{item.name}</span>
@@ -193,7 +273,7 @@ export default function LocationModal({ locationData, onClose, onNetworkClick })
                         })}
                       </div>
                     )}
-                  </button>
+                  </div>
                 ))}
               </div>
 
@@ -219,6 +299,9 @@ export default function LocationModal({ locationData, onClose, onNetworkClick })
             </div>
           )}
           {/* 👆 สิ้นสุดส่วนแสดงผลผลิต 👆 */}
+
+          {/* 👇 เรียกใช้ Component ปฏิทินฤดูกาล (มันจะซ่อนตัวเองถ้าไม่มีข้อมูล) 👇 */}
+          <SeasonalCalendarSection products={locationData.productList} />
 
           {/* ช่องทางการสื่อสารแบบใหม่ */}
           {locationData.contacts && locationData.contacts.length > 0 && (
@@ -324,33 +407,6 @@ export default function LocationModal({ locationData, onClose, onNetworkClick })
           )}
         </div>
       </div>
-
-      {/* 👇 Light Box สำหรับแสดงรูปภาพผลิตภัณฑ์ขนาดใหญ่ 👇 */}
-      {selectedProductImage && (
-        <div 
-          className="fixed inset-0 bg-black/80 z-[2000] flex items-center justify-center p-4 backdrop-blur-sm"
-          onClick={(e) => {
-             e.stopPropagation(); 
-             setSelectedProductImage(null);
-          }} 
-        >
-          <div className="relative max-w-3xl max-h-[90vh]">
-            <button 
-              onClick={() => setSelectedProductImage(null)}
-              className="absolute -top-10 -right-0 md:-right-10 text-white hover:text-gray-300 p-2 rounded-full"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6L18 18" />
-              </svg>
-            </button>
-            <img 
-              src={selectedProductImage} 
-              alt="รูปภาพผลผลิต" 
-              className="w-full max-h-[85vh] object-contain rounded-lg shadow-2xl" 
-            />
-          </div>
-        </div>
-      )}
 
     </div>
   );

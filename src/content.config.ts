@@ -2,7 +2,7 @@ import { defineCollection, z } from 'astro:content'; // 👈 เพิ่ม z �
 import { glob } from 'astro/loaders';
 
 // 1. กำหนดตัวเลือกสถานะของเดือน (ตรงกับ value ใน config.yml)
-const monthStatusEnum = z.enum(["planting", "harvest", "peak"]).optional();
+const monthStatusEnum = z.enum(["planting", "harvest", "peak", "pre-order"]).optional();
 // 1. คอลเลกชัน Locations
 const locations = defineCollection({
   // 👇 1. เปลี่ยนจาก .mdoc เป็น .md 
