@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Navigation } from 'lucide-react';
 import ImageGallery from '../ImageGallery';
 
-// ฟังก์ชันช่วยเหลือสำหรับกำหนดสไตล์ ชื่อ และ "ไอคอน" ของมาตรฐาน
+// ฟังก์ชันช่วยเหลือสำหรับกำหนดสไตล์ ชื่อ และ "ไอคอน" ของระบบการผลิต
 const getStandardTag = (std) => {
   const standardConfig = {
     pgs: { 
@@ -17,7 +17,7 @@ const getStandardTag = (std) => {
       icon: <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
     },
     gap: { 
-      label: 'GAP (ปลอดภัย)', 
+      label: 'GAP', 
       color: 'text-blue-700 bg-blue-100 border-blue-200',
       icon: <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
     },
@@ -25,6 +25,27 @@ const getStandardTag = (std) => {
       label: 'อย./ มผช./ OTOP', 
       color: 'text-orange-700 bg-orange-100 border-orange-200',
       icon: <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    },
+    // 👇 เพิ่มค่าใหม่ 4 ตัวด้านล่างนี้ 👇
+    natural: {
+      label: 'ธรรมชาติ',
+      color: 'text-lime-700 bg-lime-100 border-lime-200',
+      icon: <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 22 12 2l10 20-10-4Z"/></svg>
+    },
+    self_guarantee: {
+      label: 'อินทรีย์รับรองตนเอง',
+      color: 'text-teal-700 bg-teal-100 border-teal-200',
+      icon: <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+    },
+    np_guarantee: {
+      label: 'นครปฐมการันตี',
+      color: 'text-rose-700 bg-rose-100 border-rose-200',
+      icon: <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 15v5s3 0 3-5M9 15v5s-3 0-3-5"/><circle cx="12" cy="9" r="6"/></svg>
+    },
+    homemade: {
+      label: 'เกษตรครัวเรือน',
+      color: 'text-amber-700 bg-amber-100 border-amber-200',
+      icon: <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     },
     general: { 
       label: 'ทั่วไป', 
@@ -117,7 +138,7 @@ const SeasonalCalendarSection = ({ products }) => {
                   return (
                     <div 
                       key={m.id} 
-                      className={`flex items-center justify-center py-2.5 rounded-md border text-xs sm:text-sm transition-all ${getStatusStyle(status)}`}
+                      className={`flex items-center justify-center py-0.5 rounded-md border text-xs sm:text-sm transition-all ${getStatusStyle(status)}`}
                     >
                       {m.name}
                     </div>
@@ -133,8 +154,8 @@ const SeasonalCalendarSection = ({ products }) => {
       <div className="flex flex-wrap gap-x-5 gap-y-2 mt-5 text-sm text-gray-600 bg-gray-50/80 p-3 rounded-lg border border-gray-100 w-fit">
          <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-sm bg-[#fde047] border border-yellow-400"></span> ช่วงเวลาปลูก</div>
          <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-sm bg-[#86efac] border border-green-400"></span> ช่วงเก็บเกี่ยว</div>
-         <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-sm bg-[#16a34a] border border-green-700"></span> ออกผลมากที่สุด (Peak)</div>
-         <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-sm bg-[#fdba74] border border-orange-400"></span> รับผลิตสั่งล่วงหน้า (Pre-Order)</div>
+         <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-sm bg-[#16a34a] border border-green-700"></span> ช่วงผลผลิตมากที่สุด</div>
+         <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-sm bg-[#fdba74] border border-orange-400"></span> ผลิตภัณฑ์แปรรูป</div>
       </div>
     </div>
   );

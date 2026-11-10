@@ -136,16 +136,19 @@ collections:
               name: "standards",
               widget: "select",
               multiple: true,
+              required: false,
               options:
                 [
                   { label: "PGS", value: "pgs" },
                   { label: "Organic Thailand", value: "organic_thailand" },
                   { label: "GAP", value: "gap" },
                   { label: "OTOP", value: "fda_otop" },
-                  { label: "ทั่วไป / ไม่มีตรารับรอง", value: "general" },
-                  { label: "เกษตรครัวเรือน", value: "safety" },
+                  { label: "ทั่วไป", value: "general" },
+                  { label: "ธรรมชาติ", value: "natural" },
+                  { label: "อินทรีย์รับรองตนเอง", value: "self_guarantee" },
+                  { label: "นครปฐมการันตี", value: "np_guarantee" },
+                  { label: "เกษตรครัวเรือน", value: "homemade" },
                 ],
-              default: ["general"],
             }
           # --- 2. ข้อมูลปฏิทิน (สำหรับเอาไปทำ Infographic) ---
           - label: "📅 ปฏิทินฤดูกาล (ข้ามได้ถ้าไม่มีข้อมูล)"
@@ -166,10 +169,7 @@ collections:
                       { label: "🟨 ช่วงเวลาปลูก", value: "planting" },
                       { label: "🟩 ช่วงเวลาเก็บเกี่ยว", value: "harvest" },
                       { label: "🟩 ช่วงที่ผลผลิตออกมากที่สุด", value: "peak" },
-                      {
-                        label: "🟧 รับผลิตแบบสั่งล่วงหน้า",
-                        value: "pre-order",
-                      },
+                      { label: "🟧 ผลิตภัณฑ์แปรรูป", value: "pre-order" },
                     ],
                 }
               - {
@@ -182,10 +182,7 @@ collections:
                       { label: "🟨 ช่วงเวลาปลูก", value: "planting" },
                       { label: "🟩 ช่วงเวลาเก็บเกี่ยว", value: "harvest" },
                       { label: "🟩 ช่วงที่ผลผลิตออกมากที่สุด", value: "peak" },
-                      {
-                        label: "🟧 รับผลิตแบบสั่งล่วงหน้า",
-                        value: "pre-order",
-                      },
+                      { label: "🟧 ผลิตภัณฑ์แปรรูป", value: "pre-order" },
                     ],
                 }
               - {
@@ -198,10 +195,7 @@ collections:
                       { label: "🟨 ช่วงเวลาปลูก", value: "planting" },
                       { label: "🟩 ช่วงเวลาเก็บเกี่ยว", value: "harvest" },
                       { label: "🟩 ช่วงที่ผลผลิตออกมากที่สุด", value: "peak" },
-                      {
-                        label: "🟧 รับผลิตแบบสั่งล่วงหน้า",
-                        value: "pre-order",
-                      },
+                      { label: "🟧 ผลิตภัณฑ์แปรรูป", value: "pre-order" },
                     ],
                 }
               - {
@@ -214,10 +208,7 @@ collections:
                       { label: "🟨 ช่วงเวลาปลูก", value: "planting" },
                       { label: "🟩 ช่วงเวลาเก็บเกี่ยว", value: "harvest" },
                       { label: "🟩 ช่วงที่ผลผลิตออกมากที่สุด", value: "peak" },
-                      {
-                        label: "🟧 รับผลิตแบบสั่งล่วงหน้า",
-                        value: "pre-order",
-                      },
+                      { label: "🟧 ผลิตภัณฑ์แปรรูป", value: "pre-order" },
                     ],
                 }
               - {
@@ -230,10 +221,7 @@ collections:
                       { label: "🟨 ช่วงเวลาปลูก", value: "planting" },
                       { label: "🟩 ช่วงเวลาเก็บเกี่ยว", value: "harvest" },
                       { label: "🟩 ช่วงที่ผลผลิตออกมากที่สุด", value: "peak" },
-                      {
-                        label: "🟧 รับผลิตแบบสั่งล่วงหน้า",
-                        value: "pre-order",
-                      },
+                      { label: "🟧 ผลิตภัณฑ์แปรรูป", value: "pre-order" },
                     ],
                 }
               - {
@@ -246,10 +234,7 @@ collections:
                       { label: "🟨 ช่วงเวลาปลูก", value: "planting" },
                       { label: "🟩 ช่วงเวลาเก็บเกี่ยว", value: "harvest" },
                       { label: "🟩 ช่วงที่ผลผลิตออกมากที่สุด", value: "peak" },
-                      {
-                        label: "🟧 รับผลิตแบบสั่งล่วงหน้า",
-                        value: "pre-order",
-                      },
+                      { label: "🟧 ผลิตภัณฑ์แปรรูป", value: "pre-order" },
                     ],
                 }
               - {
@@ -262,10 +247,7 @@ collections:
                       { label: "🟨 ช่วงเวลาปลูก", value: "planting" },
                       { label: "🟩 ช่วงเวลาเก็บเกี่ยว", value: "harvest" },
                       { label: "🟩 ช่วงที่ผลผลิตออกมากที่สุด", value: "peak" },
-                      {
-                        label: "🟧 รับผลิตแบบสั่งล่วงหน้า",
-                        value: "pre-order",
-                      },
+                      { label: "🟧 ผลิตภัณฑ์แปรรูป", value: "pre-order" },
                     ],
                 }
               - {
@@ -278,10 +260,7 @@ collections:
                       { label: "🟨 ช่วงเวลาปลูก", value: "planting" },
                       { label: "🟩 ช่วงเวลาเก็บเกี่ยว", value: "harvest" },
                       { label: "🟩 ช่วงที่ผลผลิตออกมากที่สุด", value: "peak" },
-                      {
-                        label: "🟧 รับผลิตแบบสั่งล่วงหน้า",
-                        value: "pre-order",
-                      },
+                      { label: "🟧 ผลิตภัณฑ์แปรรูป", value: "pre-order" },
                     ],
                 }
               - {
@@ -294,10 +273,7 @@ collections:
                       { label: "🟨 ช่วงเวลาปลูก", value: "planting" },
                       { label: "🟩 ช่วงเวลาเก็บเกี่ยว", value: "harvest" },
                       { label: "🟩 ช่วงที่ผลผลิตออกมากที่สุด", value: "peak" },
-                      {
-                        label: "🟧 รับผลิตแบบสั่งล่วงหน้า",
-                        value: "pre-order",
-                      },
+                      { label: "🟧 ผลิตภัณฑ์แปรรูป", value: "pre-order" },
                     ],
                 }
               - {
@@ -310,10 +286,7 @@ collections:
                       { label: "🟨 ช่วงเวลาปลูก", value: "planting" },
                       { label: "🟩 ช่วงเวลาเก็บเกี่ยว", value: "harvest" },
                       { label: "🟩 ช่วงที่ผลผลิตออกมากที่สุด", value: "peak" },
-                      {
-                        label: "🟧 รับผลิตแบบสั่งล่วงหน้า",
-                        value: "pre-order",
-                      },
+                      { label: "🟧 ผลิตภัณฑ์แปรรูป", value: "pre-order" },
                     ],
                 }
               - {
@@ -326,10 +299,7 @@ collections:
                       { label: "🟨 ช่วงเวลาปลูก", value: "planting" },
                       { label: "🟩 ช่วงเวลาเก็บเกี่ยว", value: "harvest" },
                       { label: "🟩 ช่วงที่ผลผลิตออกมากที่สุด", value: "peak" },
-                      {
-                        label: "🟧 รับผลิตแบบสั่งล่วงหน้า",
-                        value: "pre-order",
-                      },
+                      { label: "🟧 ผลิตภัณฑ์แปรรูป", value: "pre-order" },
                     ],
                 }
               - {
@@ -342,10 +312,7 @@ collections:
                       { label: "🟨 ช่วงเวลาปลูก", value: "planting" },
                       { label: "🟩 ช่วงเวลาเก็บเกี่ยว", value: "harvest" },
                       { label: "🟩 ช่วงที่ผลผลิตออกมากที่สุด", value: "peak" },
-                      {
-                        label: "🟧 รับผลิตแบบสั่งล่วงหน้า",
-                        value: "pre-order",
-                      },
+                      { label: "🟧 ผลิตภัณฑ์แปรรูป", value: "pre-order" },
                     ],
                 }
 

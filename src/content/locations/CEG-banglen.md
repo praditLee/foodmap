@@ -6,10 +6,9 @@ coordinates:
 province: nakhonpathom
 supplyChainStage: upstream
 productList:
-  - name: ข้าวกข.43 น้ำตาลต่ำ
+  - name: ข้าว กข.43
     yieldAmount: 50 ตัน/ฤดูกาล (80ไร่)
     standards:
-      - general
       - gap
     calendar:
       jul: planting
@@ -24,7 +23,19 @@ productList:
       mar: peak
   - name: ข้าวไรซ์เบอร์รี่
     standards:
-      - general
+      - gap
+    yieldAmount: 8 ตัน/ฤดูกาล  (70 ถัง/ไร่)
+    calendar:
+      oct: planting
+      jul: planting
+      dec: planting
+      jun: planting
+      feb: peak
+      may: planting
+      aug: peak
+      nov: planting
+      jan: peak
+      sep: peak
 contacts:
   - type: address
     value: 66 หมู่ 3 ตำบลไผ่หูช้าง อำเภอบางเลน นครปฐม 73130

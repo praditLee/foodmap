@@ -1,11 +1,16 @@
 // src/components/Modals/NetworkModal.jsx
-import React from 'react';
+import React, { useState } from 'react';
 
-// 👇 1. เพิ่มฟังก์ชันแปลงค่ามาตรฐานเป็นป้ายสีและไอคอน 👇
+// ฟังก์ชันช่วยเหลือสำหรับกำหนดสไตล์ ชื่อ และ "ไอคอน" ของระบบการผลิต
 const getStandardTag = (std) => {
   const standardConfig = {
-    organic: { 
-      label: 'อินทรีย์ / Organic', 
+    pgs: { 
+      label: 'PGS', 
+      color: 'text-green-700 bg-green-100 border-green-200',
+      icon: <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
+    },
+    organic_thailand: { 
+      label: 'Organic Thailand', 
       color: 'text-emerald-700 bg-emerald-100 border-emerald-200',
       icon: <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
     },
@@ -14,10 +19,31 @@ const getStandardTag = (std) => {
       color: 'text-blue-700 bg-blue-100 border-blue-200',
       icon: <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
     },
-    nakhonpathom_guarantee: { 
-      label: 'นครปฐมการันตี', 
+    fda_otop: { 
+      label: 'อย./ มผช./ OTOP', 
       color: 'text-orange-700 bg-orange-100 border-orange-200',
       icon: <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    },
+    // 👇 เพิ่มค่าใหม่ 4 ตัวด้านล่างนี้ 👇
+    natural: {
+      label: 'ธรรมชาติ',
+      color: 'text-lime-700 bg-lime-100 border-lime-200',
+      icon: <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 22 12 2l10 20-10-4Z"/></svg>
+    },
+    self_guarantee: {
+      label: 'อินทรีย์รับรองตนเอง',
+      color: 'text-teal-700 bg-teal-100 border-teal-200',
+      icon: <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+    },
+    np_guarantee: {
+      label: 'นครปฐมการันตี',
+      color: 'text-rose-700 bg-rose-100 border-rose-200',
+      icon: <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 15v5s3 0 3-5M9 15v5s-3 0-3-5"/><circle cx="12" cy="9" r="6"/></svg>
+    },
+    homemade: {
+      label: 'เกษตรครัวเรือน',
+      color: 'text-amber-700 bg-amber-100 border-amber-200',
+      icon: <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     },
     general: { 
       label: 'ทั่วไป', 
@@ -28,24 +54,54 @@ const getStandardTag = (std) => {
   return standardConfig[std] || standardConfig.general;
 };
 
-// 👇 2. อัปเดต Component ProvinceCalendarSection 👇
+// 👇 อัปเดต Component ProvinceCalendarSection สำหรับนับจำนวนผลผลิต 👇
 const ProvinceCalendarSection = ({ allLocations, provinceSlug }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
   if (!allLocations || !provinceSlug) return null;
 
   const locationsInProvince = allLocations.filter(loc => loc.province === provinceSlug);
 
-  const calendarItems = [];
+  const groupedCalendars = [];
   locationsInProvince.forEach(loc => {
-    if (loc.productList) {
-      loc.productList.forEach(product => {
-        if (product.calendar && Object.values(product.calendar).some(val => val)) {
-          calendarItems.push({ location: loc, product: product });
-        }
-      });
+    const validProducts = loc.productList?.filter(product => 
+      product.calendar && Object.values(product.calendar).some(val => val)
+    ) || [];
+
+    if (validProducts.length > 0) {
+      groupedCalendars.push({ location: loc, products: validProducts });
     }
   });
 
-  if (calendarItems.length === 0) return null;
+  if (groupedCalendars.length === 0) return null;
+
+  // 🌟 1. กำหนดจำนวน "ผลผลิตรวม" ที่ต้องการให้แสดงตอนพับเก็บ
+  const INITIAL_PRODUCT_COUNT = 5; 
+  
+  // นับจำนวนผลผลิตทั้งหมดที่มีในทุกสถานที่
+  const totalProducts = groupedCalendars.reduce((sum, group) => sum + group.products.length, 0);
+  const hasMore = totalProducts > INITIAL_PRODUCT_COUNT;
+
+  // 🌟 2. ลอจิกการหั่นข้อมูลตามจำนวนผลผลิต
+  let displayedGroups = [];
+  if (isExpanded) {
+    displayedGroups = groupedCalendars; // ถ้ากางออก ก็โชว์ทั้งหมด
+  } else {
+    let currentCount = 0;
+    for (const group of groupedCalendars) {
+      if (currentCount >= INITIAL_PRODUCT_COUNT) break; // ถ้าครบโควต้าแล้ว ให้หยุดดึงข้อมูล
+      
+      const remainingSpace = INITIAL_PRODUCT_COUNT - currentCount;
+      const productsToKeep = group.products.slice(0, remainingSpace); // ตัดเอาแค่ผลผลิตที่ยังไม่เกินโควต้า
+      
+      displayedGroups.push({
+        location: group.location,
+        products: productsToKeep
+      });
+      
+      currentCount += productsToKeep.length;
+    }
+  }
 
   const months = [
     { id: 'jan', name: 'ม.ค.' }, { id: 'feb', name: 'ก.พ.' }, { id: 'mar', name: 'มี.ค.' },
@@ -59,7 +115,7 @@ const ProvinceCalendarSection = ({ allLocations, provinceSlug }) => {
     if (status === 'harvest') return 'bg-[#86efac] text-green-900 border-green-400 font-medium';
     if (status === 'peak') return 'bg-[#16a34a] text-white border-green-700 font-bold shadow-sm';
     if (status === 'pre-order') return 'bg-[#fdba74] text-orange-900 border-orange-400 font-medium';
-    return 'bg-white text-gray-300 border-gray-100';
+    return 'bg-gray-50 text-gray-300 border-gray-100'; 
   };
 
   return (
@@ -71,72 +127,93 @@ const ProvinceCalendarSection = ({ allLocations, provinceSlug }) => {
         ภาพรวมปฏิทินผลผลิตในจังหวัด
       </h3>
 
-      <div className="flex flex-col gap-4">
-        {calendarItems.map((item, idx) => (
-          <div key={idx} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:border-blue-300 transition-colors">
+      <div className="flex flex-col gap-6 relative">
+        {displayedGroups.map((group, groupIdx) => (
+          <div key={groupIdx} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:border-blue-300 transition-colors animate-in fade-in duration-300">
             
-            <div className="flex flex-col md:flex-row justify-between md:items-start mb-4 gap-3">
-              <div className="flex flex-col items-start gap-1.5">
-                
-                {/* 👇 แสดงชื่อผลผลิต และ ป้ายมาตรฐานเรียงต่อกัน 👇 */}
-                <div className="flex flex-wrap items-center gap-2">
-                  <h4 className="font-bold text-lg text-gray-900 leading-none">{item.product.name}</h4>
-                  
-                  {item.product.standards && item.product.standards.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {item.product.standards.filter(std => std !== 'general').map(std => {
-                        const tag = getStandardTag(std);
-                        return (
-                          <span key={std} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold border shadow-sm ${tag.color}`}>
-                            {tag.icon} {tag.label}
-                          </span>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-
-                <a 
-                  href={`?loc=${item.location.slug}`} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 hover:underline font-medium"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  {item.location.name}
-                </a>
-              </div>
-
-              {item.product.yieldAmount && (
-                <span className="text-sm bg-blue-50 text-blue-700 px-3 py-1.5 rounded-md font-medium border border-blue-100 whitespace-nowrap shrink-0">
-                  ปริมาณ: {item.product.yieldAmount}
-                </span>
-              )}
+            <div className="mb-4 pb-3 border-b border-gray-100">
+              <a href={`?loc=${group.location.slug}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-lg text-blue-700 hover:text-blue-900 hover:underline font-extrabold">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                {group.location.name}
+              </a>
             </div>
 
-            {/* ตาราง 12 เดือน */}
-            <div className="grid grid-cols-6 md:grid-cols-12 gap-1.5 mt-2">
-              {months.map(m => {
-                const status = item.product.calendar[m.id];
-                return (
-                  <div key={m.id} className={`flex items-center justify-center py-2.5 rounded-md border text-xs sm:text-sm transition-all ${getStatusStyle(status)}`}>
-                    {m.name}
+            <div className="flex flex-col gap-5 pl-2 md:pl-7 border-l-2 border-gray-100">
+              {group.products.map((product, prodIdx) => (
+                <div key={prodIdx} className="flex flex-col">
+                  
+                  <div className="flex flex-col md:flex-row justify-between md:items-center mb-2 gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h4 className="font-bold text-gray-800 text-[1.1rem] leading-none">{product.name}</h4>
+                      {product.standards && product.standards.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {product.standards.filter(std => std !== 'general').map(std => {
+                            const tag = getStandardTag(std);
+                            return (
+                              <span key={std} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold border shadow-sm ${tag.color}`}>
+                                {tag.icon} {tag.label}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                    {product.yieldAmount && (
+                      <span className="text-sm bg-blue-50 text-blue-700 px-3 py-1 rounded-md font-medium border border-blue-100 whitespace-nowrap shrink-0">
+                        ปริมาณ: {product.yieldAmount}
+                      </span>
+                    )}
                   </div>
-                );
-              })}
+
+                  <div className="grid grid-cols-6 md:grid-cols-12 gap-1 mt-1">
+                    {months.map(m => {
+                      const status = product.calendar[m.id];
+                      return (
+                        <div key={m.id} className={`flex items-center justify-center py-0.5 rounded-md border text-[11px] md:text-xs transition-all ${getStatusStyle(status)}`}>
+                          {m.name}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                </div>
+              ))}
             </div>
           </div>
         ))}
+
+        {/* 🌟 3. ปุ่มกดดูเพิ่มเติม อัปเดตข้อความให้นับตามจำนวนผลผลิตที่เหลือ */}
+        {hasMore && (
+          <div className={`flex justify-center mt-2 ${!isExpanded ? 'relative -top-4 pt-12 bg-gradient-to-t from-white via-white/90 to-transparent' : ''}`}>
+            <button 
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-full border border-blue-200 transition-all shadow-sm hover:shadow"
+            >
+              {isExpanded ? (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 15l7-7 7 7" /></svg>
+                  ย่อปฏิทินให้สั้นลง
+                </>
+              ) : (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>
+                  ดูปฏิทินเพิ่มเติมอีก {totalProducts - INITIAL_PRODUCT_COUNT} รายการ
+                </>
+              )}
+            </button>
+          </div>
+        )}
       </div>
 
-      <div className="flex flex-wrap gap-x-5 gap-y-2 mt-5 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-100 w-fit">
+      {/* คำอธิบายสัญลักษณ์สี */}
+      <div className="flex flex-wrap gap-x-5 gap-y-2 mt-5 text-sm text-gray-600 bg-gray-50/80 p-3 rounded-lg border border-gray-100 w-fit">
          <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-sm bg-[#fde047] border border-yellow-400"></span> ช่วงเวลาปลูก</div>
          <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-sm bg-[#86efac] border border-green-400"></span> ช่วงเก็บเกี่ยว</div>
-         <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-sm bg-[#16a34a] border border-green-700"></span> ออกผลมากที่สุด (Peak)</div>
-         <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-sm bg-[#fdba74] border border-orange-400"></span> รับผลิตสั่งล่วงหน้า (Pre-Order)</div>
+         <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-sm bg-[#16a34a] border border-green-700"></span> ช่วงผลผลิตมากที่สุด</div>
+         <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-sm bg-[#fdba74] border border-orange-400"></span> ผลิตภัณฑ์แปรรูป</div>
       </div>
     </div>
   );
