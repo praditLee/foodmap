@@ -173,11 +173,6 @@ const SeasonalCalendarSection = ({ products }) => {
     </div>
   );
 };
-
-  const usedStandards = locationData.productList 
-    ? Array.from(new Set(locationData.productList.flatMap(item => item.standards || [])))
-        .filter(std => std !== 'general')
-    : [];
   // ฟังก์ชันสำหรับ Copy เบอร์โทร
   const handleCopy = (text) => {
     navigator.clipboard.writeText(text);
