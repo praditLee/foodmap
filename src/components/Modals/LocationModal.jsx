@@ -79,17 +79,13 @@ export default function LocationModal({ locationData, onClose, onNetworkClick })
 
   const supplyChainTag = getSupplyChainTag(locationData.supplyChainStage);
 
-  // 👇 เพิ่ม Component ย่อยสำหรับแสดงปฏิทินฤดูกาล 👇
+// 👇 อัปเดต Component ย่อยสำหรับแสดงปฏิทินฤดูกาล (รวมป้ายมาตรฐานไว้ด้วย) 👇
 const SeasonalCalendarSection = ({ products }) => {
-  // 1. คัดกรองเอาเฉพาะผลผลิตที่มี yieldAmount หรือมีข้อมูล calendar อย่างน้อย 1 เดือน
-  const activeProducts = products?.filter(p => 
-    p.yieldAmount || (p.calendar && Object.values(p.calendar).some(val => val))
-  ) || [];
+  // 1. นำผลผลิตทั้งหมดมาแสดง โดยไม่ต้องเช็กว่ามี yieldAmount/calendar ไหม (เพราะเรายุบรวมกันแล้ว)
+  const activeProducts = products || [];
 
-  // 2. ถ้าไม่มีข้อมูลเลย ให้ซ่อนส่วนนี้ไปเลย
   if (activeProducts.length === 0) return null;
 
-  // ข้อมูล 12 เดือนสำหรับใช้ Map วนลูป
   const months = [
     { id: 'jan', name: 'ม.ค.' }, { id: 'feb', name: 'ก.พ.' }, { id: 'mar', name: 'มี.ค.' },
     { id: 'apr', name: 'เม.ย.' }, { id: 'may', name: 'พ.ค.' }, { id: 'jun', name: 'มิ.ย.' },
@@ -97,13 +93,12 @@ const SeasonalCalendarSection = ({ products }) => {
     { id: 'oct', name: 'ต.ค.' }, { id: 'nov', name: 'พ.ย.' }, { id: 'dec', name: 'ธ.ค.' }
   ];
 
-  // ฟังก์ชันกำหนดสีตามสถานะ
   const getStatusStyle = (status) => {
-    if (status === 'planting') return 'bg-[#fde047] text-yellow-900 border-yellow-400 font-medium'; // 🟨 สีเหลือง (ปลูก)
-    if (status === 'harvest') return 'bg-[#86efac] text-green-900 border-green-400 font-medium'; // 🟩 สีเขียวอ่อน (เก็บเกี่ยว)
-    if (status === 'peak') return 'bg-[#16a34a] text-white border-green-700 font-bold shadow-sm'; // 🟩 สีเขียวเข้ม (Peak)
+    if (status === 'planting') return 'bg-[#fde047] text-yellow-900 border-yellow-400 font-medium';
+    if (status === 'harvest') return 'bg-[#86efac] text-green-900 border-green-400 font-medium';
+    if (status === 'peak') return 'bg-[#16a34a] text-white border-green-700 font-bold shadow-sm';
     if (status === 'pre-order') return 'bg-[#fdba74] text-orange-900 border-orange-400 font-medium';
-    return 'bg-gray-50 text-gray-300 border-gray-100'; // ⬜ ว่างเปล่า
+    return 'bg-gray-50 text-gray-300 border-gray-100';
   };
 
   return (
@@ -112,18 +107,37 @@ const SeasonalCalendarSection = ({ products }) => {
         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
-        ปฏิทินฤดูกาลและปริมาณผลผลิต
+        ผลผลิต / ผลิตภัณฑ์ และปฏิทินฤดูกาล
       </h3>
       
       <div className="flex flex-col gap-4">
         {activeProducts.map((item, idx) => (
           <div key={idx} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:border-green-300 transition-colors">
             
-            {/* หัวข้อชื่อผลผลิต และ ปริมาณ */}
-            <div className="flex flex-col md:flex-row justify-between md:items-center mb-4 gap-3">
-              <h4 className="font-bold text-lg text-gray-900">{item.name}</h4>
+            <div className="flex flex-col md:flex-row justify-between md:items-start mb-4 gap-3">
+              <div className="flex flex-col items-start gap-1.5">
+                
+                {/* 👇 แสดงชื่อผลผลิต และ ป้ายมาตรฐานเรียงต่อกัน (เหมือนหน้าภาพรวมจังหวัด) 👇 */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <h4 className="font-bold text-lg text-gray-900 leading-none">{item.name}</h4>
+                  
+                  {item.standards && item.standards.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {item.standards.filter(std => std !== 'general').map(std => {
+                        const tag = getStandardTag(std);
+                        return (
+                          <span key={std} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold border shadow-sm ${tag.color}`}>
+                            {tag.icon} {tag.label}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {item.yieldAmount && (
-                <span className="text-sm bg-blue-50 text-blue-700 px-3 py-1.5 rounded-md font-medium border border-blue-100 flex items-center gap-1.5">
+                <span className="text-sm bg-blue-50 text-blue-700 px-3 py-1.5 rounded-md font-medium border border-blue-100 whitespace-nowrap shrink-0 flex items-center gap-1.5">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
                   ปริมาณ: {item.yieldAmount}
                 </span>
@@ -150,7 +164,6 @@ const SeasonalCalendarSection = ({ products }) => {
         ))}
       </div>
 
-      {/* คำอธิบายสัญลักษณ์สี */}
       <div className="flex flex-wrap gap-x-5 gap-y-2 mt-5 text-sm text-gray-600 bg-gray-50/80 p-3 rounded-lg border border-gray-100 w-fit">
          <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-sm bg-[#fde047] border border-yellow-400"></span> ช่วงเวลาปลูก</div>
          <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-sm bg-[#86efac] border border-green-400"></span> ช่วงเก็บเกี่ยว</div>
@@ -257,69 +270,6 @@ const SeasonalCalendarSection = ({ products }) => {
             </div>
           )}
 
-          {/* 👇 ส่วนแสดงผลผลิตภัณฑ์และไอคอนแบบใหม่ 👇 */}
-          {locationData.productList && locationData.productList.length > 0 && (
-            <div className="mb-8 border-b border-gray-100 pb-8">
-              <h3 className="text-xl font-bold text-gray-800 mb-4">ผลผลิต / ผลิตภัณฑ์</h3>
-              
-              <div className="flex flex-wrap gap-x-4 gap-y-4 mt-2">
-                {locationData.productList.map((item, index) => (
-                  <div
-                    className={`relative flex flex-col justify-center px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 min-w-[130px] text-center shadow-sm ${item.productImage ? 'hover:border-blue-300 hover:bg-blue-50 cursor-pointer' : 'cursor-default'}`} 
-                  >
-                    <span className="font-semibold text-gray-800 text-base">{item.name}</span>
-                    
-                    {item.productImage && (
-                      <svg xmlns="http://www.w3.org/2000/svg" className="absolute bottom-1 right-1 h-3 w-3 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-                      </svg>
-                    )}
-
-                    {/* แสดงไอคอนมาตรฐาน (แบบวงกลมเล็กๆ มุมขวาบน) */}
-                    {item.standards && item.standards.length > 0 && (
-                      <div className="absolute -top-2 -right-2 flex flex-row flex-wrap justify-end gap-1 z-10">
-                        {item.standards
-                          .filter(std => std !== 'general')
-                          .map((std) => {
-                            const tag = getStandardTag(std);
-                            return (
-                              <div 
-                                key={`std-${std}`} 
-                                className={`flex items-center justify-center w-6 h-6 rounded-full border shadow-sm bg-white ${tag.color}`}
-                                title={tag.label} // เอาเมาส์ชี้แล้วมีชื่อบอก
-                              >
-                                {tag.icon}
-                              </div>
-                            );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {/* 👇 คำอธิบายสัญลักษณ์ (Legend) แสดงเฉพาะที่มีในหน้านั้น 👇 */}
-              {usedStandards.length > 0 && (
-                <div className="mt-6 pt-4 border-t border-gray-100 bg-gray-50/50 rounded-lg p-3">
-                  <p className="text-xs text-gray-500 font-semibold mb-2 uppercase tracking-wide">คำอธิบายสัญลักษณ์:</p>
-                  <div className="flex flex-wrap gap-x-5 gap-y-2">
-                    {usedStandards.map(std => {
-                      const tag = getStandardTag(std);
-                      return (
-                        <div key={`legend-${std}`} className="flex items-center gap-1.5">
-                          <div className={`flex items-center justify-center w-5 h-5 rounded-full border bg-white ${tag.color}`}>
-                            {tag.icon}
-                          </div>
-                          <span className="text-sm text-gray-700 font-medium">{tag.label}</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-          {/* 👆 สิ้นสุดส่วนแสดงผลผลิต 👆 */}
 
           {/* 👇 เรียกใช้ Component ปฏิทินฤดูกาล (มันจะซ่อนตัวเองถ้าไม่มีข้อมูล) 👇 */}
           <SeasonalCalendarSection products={locationData.productList} />
