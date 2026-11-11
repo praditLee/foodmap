@@ -24,7 +24,7 @@ const locations = defineCollection({
       z.object({
         name: z.string(),
         yieldAmount: z.string().optional(),
-        standards: z.array(z.string()).optional(),
+        standards: z.array(z.string()).nullish(),
         
         // โครงสร้างปฏิทินที่พร้อมใช้งานวาดกราฟิก
         calendar: z.object({
