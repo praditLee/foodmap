@@ -23,6 +23,7 @@ productList:
       jan: harvest
       sep: peak
       mar: peak
+    productType: fruits
   - name: ผักหวานป่า
     standards:
       - self_guarantee
@@ -40,6 +41,7 @@ productList:
       jan: harvest
       sep: peak
       mar: peak
+    productType: vegetables
   - name: ถั่วฝักยาว
     standards:
       - self_guarantee
@@ -57,6 +59,7 @@ productList:
       jan: peak
       sep: harvest
       mar: harvest
+    productType: vegetables
   - name: ผักกูด
     standards:
       - self_guarantee
@@ -74,6 +77,7 @@ productList:
       jan: harvest
       sep: peak
       mar: harvest
+    productType: vegetables
   - name: ชะอม
     standards:
       - gap
@@ -91,6 +95,7 @@ productList:
       jan: harvest
       sep: peak
       mar: peak
+    productType: vegetables
   - name: หน่อไม้ ปักกิ่ง/ไผ่ตง
     standards:
       - homemade
@@ -108,6 +113,7 @@ productList:
       jan: harvest
       sep: peak
       mar: harvest
+    productType: vegetables
   - name: มะละกอ ฮอลล์แลนด์
     standards:
       - homemade
@@ -125,6 +131,7 @@ productList:
       jan: harvest
       sep: harvest
       mar: harvest
+    productType: fruits
   - name: ฟักทอง
     standards:
       - homemade
@@ -142,6 +149,7 @@ productList:
       jan: harvest
       sep: harvest
       mar: harvest
+    productType: fruits
   - name: ตะไคร้
     standards:
       - homemade
@@ -159,6 +167,7 @@ productList:
       jan: harvest
       sep: peak
       mar: harvest
+    productType: vegetables
   - name: พริกหอม
     standards:
       - homemade
@@ -176,6 +185,7 @@ productList:
       jan: harvest
       sep: peak
       mar: harvest
+    productType: vegetables
   - name: ไข่ผำ
     standards:
       - homemade
@@ -193,6 +203,7 @@ productList:
       jan: peak
       sep: peak
       mar: peak
+    productType: vegetables
   - name: ต้นอ่อนทานตะวัน
     standards:
       - homemade
@@ -210,6 +221,7 @@ productList:
       jan: peak
       sep: peak
       mar: peak
+    productType: vegetables
   - name: ถั่วงอก
     standards:
       - homemade
@@ -227,6 +239,7 @@ productList:
       jan: peak
       sep: peak
       mar: peak
+    productType: vegetables
   - name: ผักหวานบ้าน
     standards:
       - homemade
@@ -244,6 +257,7 @@ productList:
       jan: harvest
       sep: peak
       mar: harvest
+    productType: vegetables
 contacts:
   - type: address
     value: 54 หมู่ 10 ตำบลทุ่งขวาง อำเภอกำแพงแสน นครปฐม 73140

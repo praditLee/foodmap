@@ -25,6 +25,7 @@ productList:
       jan: planting
       sep: planting
       mar: planting
+    productType: vegetables
   - standards:
       - pgs
       - organic_thailand
@@ -44,6 +45,7 @@ productList:
       jan: planting
       sep: harvest
       mar: planting
+    productType: vegetables
   - standards:
       - pgs
       - organic_thailand
@@ -63,6 +65,7 @@ productList:
       jan: planting
       sep: harvest
       mar: planting
+    productType: vegetables
   - standards:
       - pgs
       - organic_thailand
@@ -82,6 +85,7 @@ productList:
       jan: harvest
       sep: planting
       mar: harvest
+    productType: vegetables
   - standards:
       - pgs
       - organic_thailand
@@ -101,6 +105,7 @@ productList:
       jan: harvest
       sep: harvest
       mar: harvest
+    productType: vegetables
   - standards:
       - pgs
       - organic_thailand
@@ -120,6 +125,7 @@ productList:
       jan: harvest
       sep: harvest
       mar: harvest
+    productType: vegetables
   - standards:
       - pgs
       - organic_thailand
@@ -139,6 +145,7 @@ productList:
       jan: harvest
       sep: harvest
       mar: harvest
+    productType: vegetables
   - standards:
       - pgs
       - organic_thailand
@@ -158,6 +165,7 @@ productList:
       jan: harvest
       sep: harvest
       mar: harvest
+    productType: vegetables
   - standards:
       - pgs
       - organic_thailand
@@ -177,6 +185,7 @@ productList:
       jan: harvest
       sep: harvest
       mar: harvest
+    productType: vegetables
   - standards:
       - pgs
       - organic_thailand
@@ -196,6 +205,7 @@ productList:
       jan: harvest
       sep: planting
       mar: planting
+    productType: vegetables
   - standards:
       - pgs
       - organic_thailand
@@ -215,6 +225,7 @@ productList:
       jan: planting
       sep: planting
       mar: planting
+    productType: vegetables
   - standards:
       - pgs
       - organic_thailand
@@ -234,6 +245,7 @@ productList:
       jan: planting
       sep: planting
       mar: planting
+    productType: vegetables
   - standards:
       - pgs
       - organic_thailand
@@ -253,6 +265,7 @@ productList:
       jan: planting
       sep: planting
       mar: planting
+    productType: vegetables
   - standards:
       - pgs
       - organic_thailand
@@ -272,6 +285,7 @@ productList:
       jan: planting
       sep: planting
       mar: planting
+    productType: fruits
   - standards:
       - pgs
     name: มะละกอดิบ แขกนวล/แขกดำ
@@ -289,6 +303,7 @@ productList:
       jan: planting
       sep: planting
       mar: planting
+    productType: fruits
   - standards:
       - pgs
     name: ดอกบัวหลวง
@@ -306,6 +321,7 @@ productList:
       jan: planting
       sep: planting
       mar: planting
+    productType: rice_crops
   - standards:
       - pgs
     name: ยอดมะขามอ่อน
@@ -322,6 +338,7 @@ productList:
       jan: planting
       sep: planting
       mar: planting
+    productType: vegetables
   - standards:
       - pgs
     name: มะขามเปียก
@@ -339,6 +356,7 @@ productList:
       jan: planting
       sep: planting
       mar: planting
+    productType: processed_food
   - standards:
       - pgs
     name: พริกขี้หนู
@@ -356,6 +374,7 @@ productList:
       jan: planting
       sep: planting
       mar: planting
+    productType: vegetables
   - standards:
       - pgs
     name: ฟักทองข้าวตอก
@@ -373,6 +392,7 @@ productList:
       jan: planting
       sep: planting
       mar: planting
+    productType: rice_crops
   - standards:
       - pgs
       - organic_thailand
@@ -392,6 +412,7 @@ productList:
       jan: planting
       sep: planting
       mar: planting
+    productType: vegetables
   - name: ปลาร้า
     yieldAmount: 240 กก./ปี
     calendar:
@@ -407,6 +428,7 @@ productList:
       jan: pre-order
       sep: pre-order
       mar: pre-order
+    productType: processed_food
   - name: ปลาส้ม
     yieldAmount: 100 กก./ปี
     calendar:
@@ -422,6 +444,7 @@ productList:
       jan: pre-order
       sep: pre-order
       mar: pre-order
+    productType: processed_food
 contacts:
   - type: address
     value: 6/3 หมู่ 8 ตำบลราษฎร์นิยม อำเภอไทรน้อย นนทบุรี 11150

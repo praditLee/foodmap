@@ -21,6 +21,7 @@ productList:
       jan: planting
       sep: harvest
       mar: peak
+    productType: rice_crops
   - name: ข้าวไรซ์เบอร์รี่
     standards:
       - gap
@@ -36,6 +37,7 @@ productList:
       nov: planting
       jan: peak
       sep: peak
+    productType: rice_crops
   - name: "หน่อไม้ฝรั่ง "
     yieldAmount: 60 กก./เดือน
     standards:
@@ -53,6 +55,7 @@ productList:
       jan: harvest
       sep: peak
       mar: harvest
+    productType: vegetables
   - name: ฝรั่งไส้แดง
     yieldAmount: 3 ตัน/ปี
     standards:
@@ -70,10 +73,12 @@ productList:
       jan: peak
       sep: harvest
       mar: harvest
+    productType: fruits
   - name: มะเขือเทศสีดา
     yieldAmount: 200 กก./ฤดูกาล
     standards:
       - np_guarantee
+    productType: fruits
   - name: คะน้าใบ
     yieldAmount: 30 กก./รอบ
     standards:
@@ -91,6 +96,7 @@ productList:
       jan: peak
       sep: harvest
       mar: harvest
+    productType: vegetables
   - name: กวางตุ้งใบ
     yieldAmount: 50 กก./รอบ
     standards:
@@ -108,6 +114,7 @@ productList:
       jan: peak
       sep: harvest
       mar: harvest
+    productType: vegetables
   - name: มะเขือเปราะ เจ้าพระยา
     yieldAmount: 375 กก./เดือน
     standards:
@@ -125,6 +132,7 @@ productList:
       jan: harvest
       sep: peak
       mar: harvest
+    productType: vegetables
   - name: พริกขี้หนูสวน
     yieldAmount: 10 กก./เดือน
     standards:
@@ -142,6 +150,7 @@ productList:
       jan: harvest
       sep: peak
       mar: harvest
+    productType: vegetables
 contacts:
   - type: address
     value: 66 หมู่ 3 ตำบลไผ่หูช้าง อำเภอบางเลน นครปฐม 73130

@@ -57,48 +57,53 @@ const getStandardTag = (std) => {
 // 👇 อัปเดต Component ProvinceCalendarSection สำหรับนับจำนวนผลผลิต 👇
 const ProvinceCalendarSection = ({ allLocations, provinceSlug }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  // 🌟 1. สร้าง State สำหรับ Filter (ค่าเริ่มต้นคือ 'all' โชว์ทั้งหมด)
+  const [activeFilter, setActiveFilter] = useState('all');
 
   if (!allLocations || !provinceSlug) return null;
 
   const locationsInProvince = allLocations.filter(loc => loc.province === provinceSlug);
 
+  // 🌟 2. ตัวเลือกปุ่ม Filter
+  const filterOptions = [
+    { id: 'all', label: 'ทั้งหมด' },
+    { id: 'rice_crops', label: 'ข้าว/พืชไร่' },
+    { id: 'vegetables', label: 'ผักสด' },
+    { id: 'fruits', label: 'ผลไม้' },
+    { id: 'processed_food', label: 'อาหาร/แปรรูป' }
+  ];
+
+  // 🌟 3. ลอจิกจัดกลุ่ม พร้อม กรองข้อมูลตาม Filter
   const groupedCalendars = [];
   locationsInProvince.forEach(loc => {
-    const validProducts = loc.productList?.filter(product => 
-      product.calendar && Object.values(product.calendar).some(val => val)
-    ) || [];
+    const validProducts = loc.productList?.filter(product => {
+      const hasCalendar = product.calendar && Object.values(product.calendar).some(val => val);
+      // เช็กว่าหมวดหมู่ตรงกับปุ่มที่กดไหม (ถ้าเป็น 'all' ให้ผ่านหมด)
+      const matchFilter = activeFilter === 'all' || product.productType === activeFilter;
+      
+      return hasCalendar && matchFilter;
+    }) || [];
 
     if (validProducts.length > 0) {
       groupedCalendars.push({ location: loc, products: validProducts });
     }
   });
 
-  if (groupedCalendars.length === 0) return null;
-
-  // 🌟 1. กำหนดจำนวน "ผลผลิตรวม" ที่ต้องการให้แสดงตอนพับเก็บ
-  const INITIAL_PRODUCT_COUNT = 5; 
-  
-  // นับจำนวนผลผลิตทั้งหมดที่มีในทุกสถานที่
+  // ถ้าเปลี่ยน Filter แล้วข้อมูลไม่พอให้พับ ก็รีเซ็ต isExpanded เป็น false กลับไป
+  const INITIAL_PRODUCT_COUNT = 3; 
   const totalProducts = groupedCalendars.reduce((sum, group) => sum + group.products.length, 0);
   const hasMore = totalProducts > INITIAL_PRODUCT_COUNT;
 
-  // 🌟 2. ลอจิกการหั่นข้อมูลตามจำนวนผลผลิต
   let displayedGroups = [];
-  if (isExpanded) {
-    displayedGroups = groupedCalendars; // ถ้ากางออก ก็โชว์ทั้งหมด
+  if (isExpanded || !hasMore) {
+    displayedGroups = groupedCalendars;
   } else {
     let currentCount = 0;
     for (const group of groupedCalendars) {
-      if (currentCount >= INITIAL_PRODUCT_COUNT) break; // ถ้าครบโควต้าแล้ว ให้หยุดดึงข้อมูล
-      
+      if (currentCount >= INITIAL_PRODUCT_COUNT) break;
       const remainingSpace = INITIAL_PRODUCT_COUNT - currentCount;
-      const productsToKeep = group.products.slice(0, remainingSpace); // ตัดเอาแค่ผลผลิตที่ยังไม่เกินโควต้า
-      
-      displayedGroups.push({
-        location: group.location,
-        products: productsToKeep
-      });
-      
+      const productsToKeep = group.products.slice(0, remainingSpace);
+      displayedGroups.push({ location: group.location, products: productsToKeep });
       currentCount += productsToKeep.length;
     }
   }
@@ -117,7 +122,8 @@ const ProvinceCalendarSection = ({ allLocations, provinceSlug }) => {
     if (status === 'pre-order') return 'bg-[#fdba74] text-orange-900 border-orange-400 font-medium';
     return 'bg-gray-50 text-gray-300 border-gray-100'; 
   };
-
+  // ถ้าไม่มีข้อมูลใน Filter ที่เลือกเลย
+  if (groupedCalendars.length === 0 && activeFilter === 'all') return null;
   return (
     <div className="mt-12 pt-10 border-t border-gray-200">
       <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
@@ -126,94 +132,116 @@ const ProvinceCalendarSection = ({ allLocations, provinceSlug }) => {
         </svg>
         ภาพรวมปฏิทินผลผลิตในจังหวัด
       </h3>
-
-      <div className="flex flex-col gap-6 relative">
-        {displayedGroups.map((group, groupIdx) => (
-          <div key={groupIdx} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:border-blue-300 transition-colors animate-in fade-in duration-300">
-            
-            <div className="mb-4 pb-3 border-b border-gray-100">
-              <a href={`?loc=${group.location.slug}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-lg text-blue-700 hover:text-blue-900 hover:underline font-extrabold">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                {group.location.name}
-              </a>
-            </div>
-
-            <div className="flex flex-col gap-5 pl-2 md:pl-7 border-l-2 border-gray-100">
-              {group.products.map((product, prodIdx) => (
-                <div key={prodIdx} className="flex flex-col">
-                  
-                  <div className="flex flex-col md:flex-row justify-between md:items-center mb-2 gap-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h4 className="font-bold text-gray-800 text-[1.1rem] leading-none">{product.name}</h4>
-                      {product.standards && product.standards.length > 0 && (
-                        <div className="flex flex-wrap gap-1">
-                          {product.standards.filter(std => std !== 'general').map(std => {
-                            const tag = getStandardTag(std);
-                            return (
-                              <span key={std} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold border shadow-sm ${tag.color}`}>
-                                {tag.icon} {tag.label}
-                              </span>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                    {product.yieldAmount && (
-                      <span className="text-sm bg-blue-50 text-blue-700 px-3 py-1 rounded-md font-medium border border-blue-100 whitespace-nowrap shrink-0">
-                        ปริมาณ: {product.yieldAmount}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-6 md:grid-cols-12 gap-1 mt-1">
-                    {months.map(m => {
-                      const status = product.calendar[m.id];
-                      return (
-                        <div key={m.id} className={`flex items-center justify-center py-0.5 rounded-md border text-[11px] md:text-xs transition-all ${getStatusStyle(status)}`}>
-                          {m.name}
-                        </div>
-                      );
-                    })}
-                  </div>
-                  
-                </div>
-              ))}
-            </div>
-          </div>
+      {/* 🌟 4. เรนเดอร์ปุ่มกด Filter */}
+      <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0 hide-scrollbar shrink-0">
+        {filterOptions.map(opt => (
+          <button 
+            key={opt.id}
+            onClick={() => {
+              setActiveFilter(opt.id);
+              setIsExpanded(false); // พับเก็บใหม่เมื่อเปลี่ยน Filter
+            }}
+            className={`px-4 py-1.5 rounded-full text-sm font-bold whitespace-nowrap transition-all ${
+              activeFilter === opt.id 
+                ? 'bg-blue-600 text-white shadow-md' 
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            {opt.label}
+          </button>
         ))}
-
-        {/* 🌟 3. ปุ่มกดดูเพิ่มเติม อัปเดตข้อความให้นับตามจำนวนผลผลิตที่เหลือ */}
-        {hasMore && (
-          <div className={`flex justify-center mt-2 ${!isExpanded ? 'relative -top-4 pt-12 bg-gradient-to-t from-white via-white/90 to-transparent' : ''}`}>
-            <button 
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-full border border-blue-200 transition-all shadow-sm hover:shadow"
-            >
-              {isExpanded ? (
-                <>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 15l7-7 7 7" /></svg>
-                  ย่อปฏิทินให้สั้นลง
-                </>
-              ) : (
-                <>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>
-                  ดูปฏิทินเพิ่มเติมอีก {totalProducts - INITIAL_PRODUCT_COUNT} รายการ
-                </>
-              )}
-            </button>
-          </div>
-        )}
       </div>
 
-      {/* คำอธิบายสัญลักษณ์สี */}
+      {groupedCalendars.length === 0 ? (
+        <div className="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-300 text-gray-500">
+          ไม่พบข้อมูลผลผลิตในหมวดหมู่นี้
+        </div>
+      ) : (
+        <div className="flex flex-col gap-6 relative">
+          {displayedGroups.map((group, groupIdx) => (
+            <div key={groupIdx} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:border-blue-300 transition-colors animate-in fade-in duration-300">
+              
+              <div className="mb-4 pb-3 border-b border-gray-100">
+                <a href={`?loc=${group.location.slug}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-lg text-blue-700 hover:text-blue-900 hover:underline font-extrabold">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  {group.location.name}
+                </a>
+              </div>
+
+              <div className="flex flex-col gap-5 pl-2 md:pl-7 border-l-2 border-gray-100">
+                {group.products.map((product, prodIdx) => (
+                  <div key={prodIdx} className="flex flex-col">
+                    
+                    <div className="flex flex-col md:flex-row justify-between md:items-center mb-2 gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h4 className="font-bold text-gray-800 text-[1.1rem] leading-none">{product.name}</h4>
+                        {product.standards && product.standards.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {product.standards.filter(std => std !== 'general').map(std => {
+                              const tag = getStandardTag(std);
+                              return (
+                                <span key={std} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold border shadow-sm ${tag.color}`}>
+                                  {tag.icon} {tag.label}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                      {product.yieldAmount && (
+                        <span className="text-sm bg-blue-50 text-blue-700 px-3 py-1 rounded-md font-medium border border-blue-100 whitespace-nowrap shrink-0">
+                          ปริมาณ: {product.yieldAmount}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-6 md:grid-cols-12 gap-1 mt-1">
+                      {months.map(m => {
+                        const status = product.calendar[m.id];
+                        return (
+                          <div key={m.id} className={`flex items-center justify-center py-0.5 rounded-md border text-[11px] md:text-xs transition-all ${getStatusStyle(status)}`}>
+                            {m.name}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          {hasMore && (
+            <div className={`flex justify-center mt-2 ${!isExpanded ? 'relative -top-4 pt-12 bg-gradient-to-t from-white via-white/90 to-transparent' : ''}`}>
+              <button 
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-full border border-blue-200 transition-all shadow-sm hover:shadow"
+              >
+                {isExpanded ? (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 15l7-7 7 7" /></svg>
+                    ย่อปฏิทินให้สั้นลง
+                  </>
+                ) : (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>
+                    ดูปฏิทินเพิ่มเติมอีก {totalProducts - INITIAL_PRODUCT_COUNT} รายการ
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="flex flex-wrap gap-x-5 gap-y-2 mt-5 text-sm text-gray-600 bg-gray-50/80 p-3 rounded-lg border border-gray-100 w-fit">
-         <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-sm bg-[#fde047] border border-yellow-400"></span> ช่วงเวลาปลูก</div>
-         <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-sm bg-[#86efac] border border-green-400"></span> ช่วงเก็บเกี่ยว</div>
-         <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-sm bg-[#16a34a] border border-green-700"></span> ช่วงผลผลิตมากที่สุด</div>
-         <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-sm bg-[#fdba74] border border-orange-400"></span> ผลิตภัณฑ์แปรรูป</div>
+        <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-sm bg-[#fde047] border border-yellow-400"></span> ช่วงเวลาปลูก</div>
+        <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-sm bg-[#86efac] border border-green-400"></span> ช่วงเก็บเกี่ยว</div>
+        <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-sm bg-[#16a34a] border border-green-700"></span> ช่วงผลผลิตมากที่สุด</div>
+        <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-sm bg-[#fdba74] border border-orange-400"></span> ผลิตภัณฑ์แปรรูป</div>
       </div>
     </div>
   );

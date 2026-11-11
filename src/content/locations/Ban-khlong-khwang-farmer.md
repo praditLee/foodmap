@@ -21,6 +21,7 @@ productList:
       nov: harvest
       jan: planting
       sep: planting
+    productType: rice_crops
   - name: ต้นหอม
     standards:
       - homemade
@@ -38,6 +39,7 @@ productList:
       jan: harvest
       sep: harvest
       mar: harvest
+    productType: vegetables
   - name: ผักชี
     standards:
       - homemade
@@ -55,6 +57,7 @@ productList:
       jan: harvest
       sep: harvest
       mar: harvest
+    productType: vegetables
   - name: ผักบุ้ง
     standards:
       - homemade
@@ -72,6 +75,7 @@ productList:
       jan: harvest
       sep: harvest
       mar: harvest
+    productType: vegetables
   - name: มะนาว
     standards:
       - homemade
@@ -89,6 +93,7 @@ productList:
       jan: harvest
       sep: harvest
       mar: harvest
+    productType: fruits
   - name: ฝรั่ง
     standards:
       - homemade
@@ -106,6 +111,7 @@ productList:
       jan: harvest
       sep: harvest
       mar: harvest
+    productType: fruits
   - standards:
       - homemade
     name: ฟักทองถุงทอง
@@ -114,6 +120,7 @@ productList:
       oct: planting
       nov: planting
       dec: harvest
+    productType: rice_crops
   - standards:
       - homemade
     name: ส้มโอ
@@ -131,6 +138,7 @@ productList:
       jan: harvest
       sep: peak
       mar: harvest
+    productType: fruits
   - standards:
       - homemade
     name: พุทราน้ำอ้อย
@@ -148,6 +156,7 @@ productList:
       jan: planting
       sep: harvest
       mar: planting
+    productType: fruits
   - standards:
       - homemade
     name: ชมพู่ยักษ์ใต้หวัน
@@ -165,6 +174,7 @@ productList:
       jan: planting
       sep: planting
       mar: planting
+    productType: fruits
   - standards:
       - homemade
     name: สลัด
@@ -173,6 +183,7 @@ productList:
       oct: planting
       nov: planting
       dec: harvest
+    productType: processed_food
   - name: ขนมจีนน้ำพริก
     yieldAmount: พรีออเดอร์
     calendar:
@@ -188,6 +199,7 @@ productList:
       jan: pre-order
       sep: pre-order
       mar: pre-order
+    productType: processed_food
   - name: ขนมตาล
     yieldAmount: พรีออเดอร์
     calendar:
@@ -203,6 +215,7 @@ productList:
       jan: pre-order
       sep: pre-order
       mar: pre-order
+    productType: processed_food
   - name: ขนมเทียน
     yieldAmount: พรีออเดอร์
     calendar:
@@ -218,6 +231,7 @@ productList:
       jan: pre-order
       sep: pre-order
       mar: pre-order
+    productType: processed_food
   - name: ขนมเข่ง
     yieldAmount: พรีออเดอร์
     calendar:
@@ -248,6 +262,7 @@ productList:
       jan: pre-order
       sep: pre-order
       mar: pre-order
+    productType: processed_food
   - name: มะพร้าวแก้ว
     yieldAmount: พรีออเดอร์
     calendar:
@@ -263,6 +278,7 @@ productList:
       jan: pre-order
       sep: pre-order
       mar: pre-order
+    productType: processed_food
   - name: ขนมเผือกทอด/มันทอด
     yieldAmount: พรีออเดอร์
     calendar:
@@ -278,6 +294,7 @@ productList:
       jan: pre-order
       sep: pre-order
       mar: pre-order
+    productType: processed_food
   - name: คุกกี้
     yieldAmount: พรีออเดอร์
     calendar:
@@ -293,6 +310,7 @@ productList:
       jan: pre-order
       sep: pre-order
       mar: pre-order
+    productType: processed_food
 contacts:
   - type: address
     value: 16 หมู่ 4 ตำบลคลองขวาง อำเภอไทรน้อย นนทบุรี 11150

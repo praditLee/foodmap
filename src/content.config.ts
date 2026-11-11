@@ -23,6 +23,7 @@ const locations = defineCollection({
     productList: z.array(
       z.object({
         name: z.string(),
+        productType: z.string().nullish(),
         yieldAmount: z.string().optional(),
         standards: z.array(z.string()).nullish(),
         

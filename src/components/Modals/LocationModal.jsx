@@ -79,12 +79,43 @@ export default function LocationModal({ locationData, onClose, onNetworkClick })
 
   const supplyChainTag = getSupplyChainTag(locationData.supplyChainStage);
 
-// 👇 อัปเดต Component ย่อยสำหรับแสดงปฏิทินฤดูกาล (รวมป้ายมาตรฐานไว้ด้วย) 👇
+// 👇 อัปเดต Component SeasonalCalendarSection (เพิ่ม Filter + พับเก็บ) 👇
 const SeasonalCalendarSection = ({ products }) => {
-  // 1. นำผลผลิตทั้งหมดมาแสดง โดยไม่ต้องเช็กว่ามี yieldAmount/calendar ไหม (เพราะเรายุบรวมกันแล้ว)
-  const activeProducts = products || [];
+  // 1. สร้าง State สำหรับ พับเก็บ และ Filter
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [activeFilter, setActiveFilter] = useState('all');
 
+  const activeProducts = products || [];
   if (activeProducts.length === 0) return null;
+
+  // 2. ตัวเลือกปุ่ม Filter
+  const filterOptions = [
+    { id: 'all', label: 'ทั้งหมด' },
+    { id: 'rice_crops', label: 'ข้าว/พืชไร่' },
+    { id: 'vegetables', label: 'ผักสด' },
+    { id: 'fruits', label: 'ผลไม้' },
+    { id: 'processed_food', label: 'อาหาร/แปรรูป' }
+  ];
+
+  // 3. กรองข้อมูลผลผลิตตาม Filter และเช็กว่ามีข้อมูลที่จะแสดงไหม
+  const filteredProducts = activeProducts.filter(product => {
+    // เช็กว่ามีข้อมูลปริมาณ หรือ มีข้อมูลปฏิทินอย่างน้อย 1 เดือน
+    const hasData = product.yieldAmount || (product.calendar && Object.values(product.calendar).some(val => val));
+    // เช็กว่าหมวดหมู่ตรงกับ Filter ที่กดไหม
+    const matchFilter = activeFilter === 'all' || product.productType === activeFilter;
+    
+    return hasData && matchFilter;
+  });
+
+  // ถ้าไม่มีผลผลิตเลยตั้งแต่แรก (ตอนเป็น 'all') ก็ซ่อน Component นี้ไปเลย
+  if (filteredProducts.length === 0 && activeFilter === 'all') return null;
+
+  // 4. ลอจิกการตัดแบ่งข้อมูลเพื่อซ่อน/แสดง (พับเก็บ)
+  const INITIAL_PRODUCT_COUNT = 3; 
+  const hasMore = filteredProducts.length > INITIAL_PRODUCT_COUNT;
+  
+  // ถ้ากางออก ให้ดึงมาทั้งหมด ถ้าพับอยู่ ให้ slice มาแค่จำนวนเริ่มต้น
+  const displayedProducts = isExpanded ? filteredProducts : filteredProducts.slice(0, INITIAL_PRODUCT_COUNT);
 
   const months = [
     { id: 'jan', name: 'ม.ค.' }, { id: 'feb', name: 'ก.พ.' }, { id: 'mar', name: 'มี.ค.' },
@@ -103,67 +134,115 @@ const SeasonalCalendarSection = ({ products }) => {
 
   return (
     <div className="mb-8 border-b border-gray-100 pb-8 animate-in fade-in duration-500">
-      <h3 className="text-xl font-bold text-gray-800 mb-5 flex items-center gap-2">
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
-        ผลผลิต / ผลิตภัณฑ์ และปฏิทินฤดูกาล
-      </h3>
       
-      <div className="flex flex-col gap-4">
-        {activeProducts.map((item, idx) => (
-          <div key={idx} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:border-green-300 transition-colors">
-            
-            <div className="flex flex-col md:flex-row justify-between md:items-start mb-4 gap-3">
-              <div className="flex flex-col items-start gap-1.5">
-                
-                {/* 👇 แสดงชื่อผลผลิต และ ป้ายมาตรฐานเรียงต่อกัน (เหมือนหน้าภาพรวมจังหวัด) 👇 */}
-                <div className="flex flex-wrap items-center gap-2">
-                  <h4 className="font-bold text-lg text-gray-900 leading-none">{item.name}</h4>
-                  
-                  {item.standards && item.standards.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {item.standards.filter(std => std !== 'general').map(std => {
-                        const tag = getStandardTag(std);
-                        return (
-                          <span key={std} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold border shadow-sm ${tag.color}`}>
-                            {tag.icon} {tag.label}
-                          </span>
-                        );
-                      })}
-                    </div>
-                  )}
+      {/* ส่วนหัว และ ปุ่ม Filter */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+        <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          ผลผลิต / ผลิตภัณฑ์ และปฏิทินฤดูกาล
+        </h3>
+        
+        {/* เรนเดอร์ปุ่มกด Filter */}
+        <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0 hide-scrollbar shrink-0">
+          {filterOptions.map(opt => (
+            <button 
+              key={opt.id}
+              onClick={() => {
+                setActiveFilter(opt.id);
+                setIsExpanded(false); // เมื่อเปลี่ยน Filter ให้พับเก็บกลับไปค่าเริ่มต้นเสมอ
+              }}
+              className={`px-4 py-1.5 rounded-full text-sm font-bold whitespace-nowrap transition-all ${
+                activeFilter === opt.id 
+                  ? 'bg-blue-600 text-white shadow-md' 
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      
+      {/* ถ้ากด Filter แล้วไม่เจอข้อมูลเลย ให้แสดงข้อความ */}
+      {filteredProducts.length === 0 ? (
+        <div className="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-300 text-gray-500">
+          ไม่พบข้อมูลผลผลิตในหมวดหมู่นี้
+        </div>
+      ) : (
+        <div className="flex flex-col gap-4 relative">
+          
+          {/* เรนเดอร์ผลผลิตที่ผ่านการกรองและตัดแบ่งแล้ว */}
+          {displayedProducts.map((item, idx) => (
+            <div key={idx} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:border-green-300 transition-colors">
+              <div className="flex flex-col md:flex-row justify-between md:items-start mb-4 gap-3">
+                <div className="flex flex-col items-start gap-1.5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h4 className="font-bold text-lg text-gray-900 leading-none">{item.name}</h4>
+                    {item.standards && item.standards.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {item.standards.filter(std => std !== 'general').map(std => {
+                          const tag = getStandardTag(std);
+                          return (
+                            <span key={std} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold border shadow-sm ${tag.color}`}>
+                              {tag.icon} {tag.label}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 </div>
+                {item.yieldAmount && (
+                  <span className="text-sm bg-blue-50 text-blue-700 px-3 py-1.5 rounded-md font-medium border border-blue-100 whitespace-nowrap shrink-0 flex items-center gap-1.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
+                    ปริมาณ: {item.yieldAmount}
+                  </span>
+                )}
               </div>
 
-              {item.yieldAmount && (
-                <span className="text-sm bg-blue-50 text-blue-700 px-3 py-1.5 rounded-md font-medium border border-blue-100 whitespace-nowrap shrink-0 flex items-center gap-1.5">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
-                  ปริมาณ: {item.yieldAmount}
-                </span>
+              {item.calendar && Object.values(item.calendar).some(v => v) && (
+                <div className="grid grid-cols-6 md:grid-cols-12 gap-1.5 mt-2">
+                  {months.map(m => {
+                    const status = item.calendar[m.id];
+                    return (
+                      <div key={m.id} className={`flex items-center justify-center py-2.5 rounded-md border text-xs sm:text-sm transition-all ${getStatusStyle(status)}`}>
+                        {m.name}
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
+          ))}
 
-            {/* ตาราง 12 เดือน (แสดงเฉพาะเมื่อมีการกรอกปฏิทิน) */}
-            {item.calendar && Object.values(item.calendar).some(v => v) && (
-              <div className="grid grid-cols-6 md:grid-cols-12 gap-1.5 mt-2">
-                {months.map(m => {
-                  const status = item.calendar[m.id];
-                  return (
-                    <div 
-                      key={m.id} 
-                      className={`flex items-center justify-center py-0.5 rounded-md border text-xs sm:text-sm transition-all ${getStatusStyle(status)}`}
-                    >
-                      {m.name}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+          {/* ปุ่มกดดูเพิ่มเติม อัปเดตข้อความให้นับตามจำนวนผลผลิตที่เหลือ */}
+          {hasMore && (
+            <div className={`flex justify-center mt-2 ${!isExpanded ? 'relative -top-4 pt-12 bg-gradient-to-t from-white via-white/90 to-transparent' : ''}`}>
+              <button 
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-full border border-blue-200 transition-all shadow-sm hover:shadow"
+              >
+                {isExpanded ? (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 15l7-7 7 7" /></svg>
+                    ย่อปฏิทินให้สั้นลง
+                  </>
+                ) : (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>
+                    ดูเพิ่มเติมอีก {filteredProducts.length - INITIAL_PRODUCT_COUNT} รายการ
+                  </>
+                )}
+              </button>
+            </div>
+          )}
 
+        </div>
+      )}
+
+      {/* คำอธิบายสัญลักษณ์สี */}
       <div className="flex flex-wrap gap-x-5 gap-y-2 mt-5 text-sm text-gray-600 bg-gray-50/80 p-3 rounded-lg border border-gray-100 w-fit">
          <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-sm bg-[#fde047] border border-yellow-400"></span> ช่วงเวลาปลูก</div>
          <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded-sm bg-[#86efac] border border-green-400"></span> ช่วงเก็บเกี่ยว</div>

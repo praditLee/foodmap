@@ -126,6 +126,20 @@ collections:
         fields:
           - { label: "ชื่อผลผลิต / ผลิตภัณฑ์", name: "name", widget: "string" }
           - {
+              label: "หมวดหมู่ผลผลิต (สำหรับ Filter)",
+              name: "productType",
+              widget: "select",
+              required: false, # ให้เว้นว่างได้เผื่อบางอันไม่อยากจัดหมวด
+              options:
+                [
+                  { label: "ข้าวและพืชไร่", value: "rice_crops" },
+                  { label: "ผักสด", value: "vegetables" },
+                  { label: "ผลไม้", value: "fruits" },
+                  { label: "อาหารและแปรรูป", value: "processed_food" },
+                  { label: "อื่นๆ", value: "others" },
+                ],
+            }
+          - {
               label: "ปริมาณผลผลิต โดยประมาณ (เช่น 3-5 ตัน/ไร่ 40-50 ตัน)",
               name: "yieldAmount",
               widget: "string",
