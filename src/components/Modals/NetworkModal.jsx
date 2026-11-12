@@ -136,6 +136,83 @@ const HealthyMenuSection = ({ menus }) => {
   );
 };
 
+// 👇 Component สำหรับแสดงรายชื่อตลาดสีเขียวในจังหวัด 👇
+const GreenMarketSection = ({ allLocations, provinceSlug }) => {
+  if (!allLocations || !provinceSlug) return null;
+
+  // 1. กรองเอาเฉพาะสถานที่ที่เป็น "ตลาดเขียว (midstream)" และอยู่ในจังหวัดนี้
+  const greenMarkets = allLocations.filter(
+    loc => loc.province === provinceSlug && loc.supplyChainStage === 'midstream'
+  );
+
+  // ถ้าไม่มีตลาดเขียวเลย ให้ซ่อนส่วนนี้ไป
+  if (greenMarkets.length === 0) return null;
+
+  return (
+    <div className="mt-12 pt-10 border-t border-gray-200">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <h3 className="text-2xl font-bold text-teal-700 flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
+          </svg>
+          ตลาดสีเขียวในจังหวัด
+        </h3>
+        <span className="bg-teal-50 text-teal-700 px-3 py-1 rounded-full text-sm font-bold border border-teal-200">
+          พบ {greenMarkets.length} แห่ง
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
+        {greenMarkets.map((market, idx) => (
+          <a 
+            key={idx} 
+            href={`?loc=${market.slug}`} // ลิงก์ไปเปิดหน้า LocationModal ของตลาดนั้น
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-white rounded-2xl border border-teal-100 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md hover:border-teal-400 group block relative"
+          >
+            {/* รูปภาพตลาด */}
+            {market.images && market.images.length > 0 ? (
+              <div className="w-full h-48 overflow-hidden bg-gray-100">
+                <img 
+                  src={typeof market.images[0] === 'string' ? market.images[0] : market.images[0].image || market.images[0].src} 
+                  alt={market.name} 
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                />
+              </div>
+            ) : (
+              <div className="w-full h-48 bg-teal-50 flex items-center justify-center text-teal-300">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+            )}
+
+            <div className="p-5">
+              <h4 className="text-xl font-extrabold text-gray-900 mb-1 group-hover:text-teal-700 transition-colors line-clamp-2">
+                {market.name}
+              </h4>
+              
+              {market.networkData && (
+                <p className="text-sm text-gray-500 mb-3 truncate flex items-center gap-1.5">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                  {market.networkData.name}
+                </p>
+              )}
+
+              <div className="mt-4 pt-4 border-t border-teal-50 flex items-center text-teal-600 text-sm font-bold gap-1">
+                <span>ดูรายละเอียดตลาด</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+              </div>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 // 👇 อัปเดต Component ProvinceCalendarSection สำหรับนับจำนวนผลผลิต 👇
 const ProvinceCalendarSection = ({ allLocations, provinceSlug }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -389,10 +466,16 @@ export default function NetworkModal({ networkData, provinceName, allLocations, 
                 )
               ))}
             </div>
-            {/* 👇 เรียกใช้งาน Component เมนูชูสุขภาพ 👇 */}
+            {/* 1. เมนูชูสุขภาพ (ถ้ามี) */}
             <HealthyMenuSection menus={networkData.healthMenus} />
 
-            {/* 👇 3. เรียกใช้งาน Component ปฏิทินตรงด้านล่างสุดของเนื้อหา 👇 */}
+            {/* 👇 2. เพิ่มรายชื่อตลาดสีเขียวตรงนี้ 👇 */}
+            <GreenMarketSection 
+              allLocations={allLocations} 
+              provinceSlug={provinceSlug} 
+            />
+
+            {/* 3. ปฏิทินผลผลิตรวมของจังหวัด */}
             <ProvinceCalendarSection 
               allLocations={allLocations} 
               provinceSlug={provinceSlug} 
