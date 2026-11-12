@@ -1,6 +1,6 @@
 // src/components/Modals/NetworkModal.jsx
 import React, { useState } from 'react';
-
+import { marked } from 'marked';
 // ฟังก์ชันช่วยเหลือสำหรับกำหนดสไตล์ ชื่อ และ "ไอคอน" ของระบบการผลิต
 const getStandardTag = (std) => {
   const standardConfig = {
@@ -52,6 +52,88 @@ const getStandardTag = (std) => {
     },
   };
   return standardConfig[std] || standardConfig.general;
+};
+
+// 👇 Component สำหรับเมนูชูสุขภาพ 👇
+const HealthyMenuSection = ({ menus }) => {
+  // State สำหรับจำว่าการ์ดไหนกำลังถูกกางอยู่ (เก็บเป็น index)
+  const [expandedIndex, setExpandedIndex] = useState(null);
+
+  if (!menus || menus.length === 0) return null;
+
+  return (
+    <div className="mt-12 pt-10 border-t border-gray-200">
+      <h3 className="text-2xl font-bold text-green-700 mb-6 flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z"/><path d="M12 7v5l3 3"/>
+        </svg>
+        เมนูชูสุขภาพจากเครือข่าย
+      </h3>
+
+      {/* 🌟 จุดสำคัญ: ใช้ items-start เพื่อไม่ให้การ์ดในแถวเดียวกันยืดตามเวลาเรากางการ์ดใดการ์ดหนึ่ง */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
+        {menus.map((menu, idx) => {
+          const isExpanded = expandedIndex === idx;
+
+          return (
+            <div key={idx} className="bg-white rounded-2xl border border-green-100 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md hover:border-green-300">
+              
+              {/* รูปภาพเมนู */}
+              {menu.image ? (
+                <img src={menu.image} alt={menu.name} className="w-full h-48 object-cover" />
+              ) : (
+                <div className="w-full h-48 bg-green-50 flex items-center justify-center text-green-300">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                </div>
+              )}
+
+              <div className="p-5">
+                <h4 className="text-xl font-extrabold text-gray-900 mb-2">{menu.name}</h4>
+                
+                {/* คำโปรย (พับเก็บ = โชว์ 2 บรรทัด, กางออก = โชว์เต็ม) */}
+                {menu.introText && (
+                  <p 
+                    className={`text-sm text-gray-600 leading-relaxed transition-all duration-300 ${
+                      isExpanded ? '' : 'line-clamp-2'
+                    }`}
+                  >
+                    {menu.introText}
+                  </p>
+                )}
+
+                {/* 👇 ส่วนเนื้อหาที่จะกางออก (สไลด์ลงมาแบบนุ่มนวล) 👇 */}
+                <div 
+                  className={`grid transition-all duration-300 ease-in-out ${isExpanded ? 'grid-rows-[1fr] opacity-100 mt-4' : 'grid-rows-[0fr] opacity-0'}`}
+                >
+                  <div className="overflow-hidden">
+                    {/* ใช้ dangerouslySetInnerHTML เพื่อเรนเดอร์ HTML และใช้คลาส prose เพื่อให้ Tailwind จัดหน้าตาให้อัตโนมัติ */}
+                    <div 
+                      className="pt-4 border-t border-gray-100 text-sm text-gray-700 leading-relaxed prose prose-sm prose-green max-w-none"
+                      dangerouslySetInnerHTML={{ 
+                        __html: menu.content ? marked.parse(menu.content, { breaks: true }) : '' 
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* ปุ่มกดเปิด/ปิด */}
+                <button 
+                  onClick={() => setExpandedIndex(isExpanded ? null : idx)}
+                  className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-green-600 hover:text-green-800 transition-colors bg-green-50 px-3 py-1.5 rounded-full"
+                >
+                  {isExpanded ? (
+                    <>ย่อรายละเอียด <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 15l7-7 7 7" /></svg></>
+                  ) : (
+                    <>ดูวิธีทำ / ส่วนผสม <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg></>
+                  )}
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 };
 
 // 👇 อัปเดต Component ProvinceCalendarSection สำหรับนับจำนวนผลผลิต 👇
@@ -307,6 +389,8 @@ export default function NetworkModal({ networkData, provinceName, allLocations, 
                 )
               ))}
             </div>
+            {/* 👇 เรียกใช้งาน Component เมนูชูสุขภาพ 👇 */}
+            <HealthyMenuSection menus={networkData.healthMenus} />
 
             {/* 👇 3. เรียกใช้งาน Component ปฏิทินตรงด้านล่างสุดของเนื้อหา 👇 */}
             <ProvinceCalendarSection 

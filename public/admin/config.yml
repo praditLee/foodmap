@@ -52,6 +52,32 @@ collections:
           widget: "markdown",
           required: false,
         }
+      - label: "🍲 เมนูชูสุขภาพ (ถ้ามี)"
+        name: "healthMenus"
+        widget: "list"
+        required: false
+        collapsed: true
+        fields:
+          - { label: "ชื่อเมนู", name: "name", widget: "string" }
+          - {
+              label: "รูปภาพเมนู",
+              name: "image",
+              widget: "image",
+              required: false,
+            }
+
+          - {
+              label: "คำโปรย (สั้นๆ)",
+              name: "introText",
+              widget: "text",
+              required: false,
+            }
+          - {
+              label: "รายละเอียดวิธีทำ / ส่วนผสม",
+              name: "content",
+              widget: "markdown",
+              required: false,
+            }
 
   # ==========================================
   # 2. คอลเลกชัน สถานที่ / กลุ่ม (Locations)[cite: 2]

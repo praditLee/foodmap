@@ -66,6 +66,14 @@ const networks = defineCollection({
     name: z.string(),
     province: z.string().default('chainat'),
     imageUrl: z.string().optional(),
+    healthMenus: z.array(
+      z.object({
+        image: z.string().optional(),
+        name: z.string(),
+        introText: z.string().optional(),
+        content: z.string().optional(),
+      })
+    ).nullish(),
   })
 });
 
