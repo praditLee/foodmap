@@ -74,6 +74,23 @@ const networks = defineCollection({
         content: z.string().optional(),
       })
     ).nullish(),
+    knowledges: z.array(
+      z.object({
+        image: z.string().optional(),
+        title: z.string(),
+        content: z.string().optional(),
+        file: z.string().optional(),
+      })
+    ).nullish(),
+
+    researches: z.array(
+      z.object({
+        image: z.string().optional(),
+        title: z.string(),
+        content: z.string().optional(),
+        file: z.string().optional(),
+      })
+    ).nullish(),
   })
 });
 

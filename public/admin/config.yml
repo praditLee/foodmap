@@ -52,6 +52,49 @@ collections:
           widget: "markdown",
           required: false,
         }
+
+      - label: "📚 องค์ความรู้ (ถ้ามี)"
+        name: "knowledges"
+        widget: "list"
+        required: false
+        collapsed: true
+        fields:
+          # - { label: "ภาพปก", name: "image", widget: "image", required: false }
+          - { label: "หัวข้อ", name: "title", widget: "string" }
+          - {
+              label: "รายละเอียด",
+              name: "content",
+              widget: "markdown",
+              required: false,
+            }
+          - {
+              label: "ไฟล์เอกสาร (PDF)",
+              name: "file",
+              widget: "file",
+              required: false,
+            }
+
+      - label: "🔬 งานวิจัย (ถ้ามี)"
+        name: "researches"
+        widget: "list"
+        required: false
+        collapsed: true
+        fields:
+          # - { label: "ภาพปก", name: "image", widget: "image", required: false }
+          - { label: "หัวข้อ", name: "title", widget: "string" }
+          - {
+              label: "รายละเอียด",
+              name: "content",
+              widget: "markdown",
+              required: false,
+            }
+          - {
+              label: "ไฟล์เอกสาร (PDF)",
+              name: "file",
+              widget: "file",
+              required: false,
+            }
+
       - label: "🍲 เมนูชูสุขภาพ (ถ้ามี)"
         name: "healthMenus"
         widget: "list"

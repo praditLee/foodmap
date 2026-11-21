@@ -54,6 +54,84 @@ const getStandardTag = (std) => {
   return standardConfig[std] || standardConfig.general;
 };
 
+// 👇 อัปเดต Component DocumentSection (แบบไม่มีรูปภาพ) 👇
+const DocumentSection = ({ title, icon, items, themeColor }) => {
+  const [expandedIndex, setExpandedIndex] = useState(null);
+
+  if (!items || items.length === 0) return null;
+
+  const theme = {
+    indigo: { title: 'text-indigo-700', bg: 'bg-indigo-50', border: 'border-indigo-100', hover: 'hover:border-indigo-300', btn: 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100', icon: 'text-indigo-300' },
+    fuchsia: { title: 'text-fuchsia-700', bg: 'bg-fuchsia-50', border: 'border-fuchsia-100', hover: 'hover:border-fuchsia-300', btn: 'bg-fuchsia-50 text-fuchsia-700 hover:bg-fuchsia-100', icon: 'text-fuchsia-300' }
+  }[themeColor] || theme.indigo;
+
+  return (
+    <div className="mt-12 pt-10 border-t border-gray-200">
+      <h3 className={`text-2xl font-bold mb-5 flex items-center gap-2 ${theme.title}`}>
+        {icon}
+        {title}
+      </h3>
+
+      <div className="flex flex-col gap-4">
+        {items.map((doc, idx) => {
+          const isExpanded = expandedIndex === idx;
+
+          return (
+            // 🌟 ตัด sm:flex-row ออก เพื่อให้การ์ดแสดงผลแบบแนวตั้งและยืดเต็มความกว้าง
+            <div key={idx} className={`bg-white rounded-2xl border ${theme.border} shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md ${theme.hover} flex flex-col`}>
+              
+              <div className="p-5 sm:p-6 flex flex-col">
+                <h4 className="text-xl font-extrabold text-gray-900 mb-4 leading-tight">{doc.title}</h4>
+                
+                {/* กลุ่มปุ่ม และลิงก์ */}
+                <div className="flex flex-wrap items-center gap-3 mb-2">
+                  {doc.file && (
+                    <a 
+                      href={doc.file} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 hover:border-blue-400 bg-gray-50 hover:bg-blue-50 text-gray-700 hover:text-blue-700 transition-colors group"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-500 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                      <span className="text-sm font-semibold">ดาวน์โหลด PDF</span>
+                    </a>
+                  )}
+
+                  {doc.content && (
+                    <button 
+                      onClick={() => setExpandedIndex(isExpanded ? null : idx)}
+                      className={`inline-flex items-center gap-1.5 text-sm font-bold px-4 py-2 rounded-lg transition-colors ${theme.btn}`}
+                    >
+                      {isExpanded ? (
+                        <>ปิดรายละเอียด <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 15l7-7 7 7" /></svg></>
+                      ) : (
+                        <>อ่านรายละเอียด <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg></>
+                      )}
+                    </button>
+                  )}
+                </div>
+
+                {/* เนื้อหา Markdown (สไลด์ลงมาเมื่อกด) */}
+                {doc.content && (
+                  <div className={`grid transition-all duration-300 ease-in-out ${isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                    <div className="overflow-hidden">
+                      <div 
+                        className="pt-4 mt-4 border-t border-gray-100 text-sm text-gray-700 leading-relaxed prose prose-sm max-w-none"
+                        dangerouslySetInnerHTML={{ __html: marked.parse(doc.content, { breaks: true }) }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 // 👇 Component สำหรับเมนูชูสุขภาพ 👇
 const HealthyMenuSection = ({ menus }) => {
   // State สำหรับจำว่าการ์ดไหนกำลังถูกกางอยู่ (เก็บเป็น index)
@@ -466,6 +544,23 @@ export default function NetworkModal({ networkData, provinceName, allLocations, 
                 )
               ))}
             </div>
+
+            {/* 📚 ส่วนขององค์ความรู้ (ใช้ธีมสีคราม) */}
+            <DocumentSection 
+              title="องค์ความรู้" 
+              themeColor="indigo"
+              items={networkData.knowledges} 
+              icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>}
+            />
+
+            {/* 🔬 ส่วนของงานวิจัย (ใช้ธีมสีชมพูอมม่วง) */}
+            <DocumentSection 
+              title="งานวิจัย" 
+              themeColor="fuchsia"
+              items={networkData.researches} 
+              icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>}
+            />
+
             {/* 1. เมนูชูสุขภาพ (ถ้ามี) */}
             <HealthyMenuSection menus={networkData.healthMenus} />
 
